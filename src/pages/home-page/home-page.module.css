@@ -1,0 +1,69 @@
+.page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  width: min(100%, 760px);
+  padding: 40px;
+  border: 1px solid #e1e7f0;
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: 0 20px 60px rgb(40 58 94 / 10%);
+}
+
+.card button {
+  min-height: 42px;
+  padding: 0 18px;
+  border: 1px solid #d7deeb;
+  border-radius: 10px;
+  color: #34405a;
+  background: #ffffff;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.card button:hover:not(:disabled) {
+  border-color: #536dfe;
+  color: #536dfe;
+}
+
+.eyebrow {
+  margin: 0 0 12px;
+  color: #536dfe;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+
+.card h1 {
+  margin: 0;
+  font-size: clamp(32px, 6vw, 52px);
+  line-height: 1.1;
+}
+
+.description {
+  margin: 18px 0 0;
+  color: #65738b;
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+@media (max-width: 600px) {
+  .card {
+    align-items: flex-start;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    padding: 32px 24px;
+    border-radius: 18px;
+  }
+}

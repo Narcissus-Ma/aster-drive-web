@@ -1,0 +1,178 @@
+import { useCallback, useEffect, useMemo } from 'react';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+
+import type {
+  ResourceKind,
+  ResourceResponse,
+} from '../../../shared/api/generated/openapi';
+import { useFileSelection } from '../hooks/use-file-selection';
+import { useFileViewState } from '../hooks/use-file-view-state';
+import {
+  useFolderChildren,
+  type FolderChildrenQuery,
+} from '../hooks/use-folder-children';
+import { DirectoryTree } from './directory-tree';
+import { FileBreadcrumb } from './file-breadcrumb';
+import { FileGrid } from './file-grid';
+import { FileList } from './file-list';
+import { FileToolbar } from './file-toolbar';
+import { ResourceFilterBar, type ResourceFilterValues } from './resource-filter-bar';
+
+const ROOT_RESOURCE_ID = import.meta.env.VITE_ROOT_RESOURCE_ID ?? '';
+const resourceKinds: ResourceKind[] = ['root', 'folder', 'document', 'file'];
+
+function parseFilters(searchParams: URLSearchParams): ResourceFilterValues {
+  const kindValue = searchParams.get('kind') as ResourceKind | null;
+  return {
+    kind: kindValue && resourceKinds.includes(kindValue) ? kindValue : undefined,
+    sortBy: searchParams.get('sort_by') === 'updated_at' ? 'updated_at' : 'name',
+    sortDirection: searchParams.get('sort_direction') === 'desc' ? 'desc' : 'asc',
+    updatedFrom: searchParams.get('updated_from') ?? undefined,
+    updatedTo: searchParams.get('updated_to') ?? undefined,
+  };
+}
+
+function writeFiltersToSearchParams(values: ResourceFilterValues): URLSearchParams {
+  const next = new URLSearchParams();
+  if (values.kind) next.set('kind', values.kind);
+  if (values.updatedFrom) next.set('updated_from', values.updatedFrom);
+  if (values.updatedTo) next.set('updated_to', values.updatedTo);
+  if (values.sortBy !== 'name') next.set('sort_by', values.sortBy);
+  if (values.sortDirection !== 'asc') next.set('sort_direction', values.sortDirection);
+  return next;
+}
+
+export function FileWorkspace(): JSX.Element {
+  const { folderId } = useParams<{ folderId?: string }>();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const parentId = folderId ?? ROOT_RESOURCE_ID;
+  const filterValues = useMemo(() => parseFilters(searchParams), [searchParams]);
+  const query = useMemo<FolderChildrenQuery>(
+    () => ({
+      parentId,
+      kind: filterValues.kind,
+      updatedFrom: filterValues.updatedFrom,
+      updatedTo: filterValues.updatedTo,
+      sortBy: filterValues.sortBy,
+      sortDirection: filterValues.sortDirection,
+    }),
+    [filterValues, parentId],
+  );
+  const childrenQuery = useFolderChildren(query);
+  const selectedIds = useFileSelection((state) => state.selectedIds);
+  const toggleSelection = useFileSelection((state) => state.toggle);
+  const clearSelection = useFileSelection((state) => state.clear);
+  const viewMode = useFileViewState((state) => state.viewMode);
+  const setViewMode = useFileViewState((state) => state.setViewMode);
+  const refetch = childrenQuery.refetch;
+
+  useEffect(() => {
+    clearSelection();
+  }, [clearSelection, parentId]);
+
+  const selectedResource = useMemo(
+    () => childrenQuery.items.find((item) => selectedIds.has(item.id)) ?? null,
+    [childrenQuery.items, selectedIds],
+  );
+
+  const handleFilterChange = useCallback(
+    (changes: Partial<ResourceFilterValues>) => {
+      const nextValues = { ...filterValues, ...changes };
+      setSearchParams(writeFiltersToSearchParams(nextValues));
+    },
+    [filterValues, setSearchParams],
+  );
+
+  const handleOpen = useCallback(
+    (resource: ResourceResponse) => {
+      if (resource.kind === 'folder' || resource.kind === 'root') {
+        navigate(`/drive/${encodeURIComponent(resource.id)}`);
+      }
+    },
+    [navigate],
+  );
+
+  const handleCreateFolder = useCallback(() => {
+    // 创建接口在后续任务接入，当前先保留工作台入口和可测试的交互边界。
+  }, []);
+
+  const handleRefresh = useCallback(() => {
+    void refetch();
+  }, [refetch]);
+
+  return (
+    <div data-testid="file-workspace" className="file-workspace">
+      <aside>
+        <DirectoryTree currentFolderId={folderId} />
+      </aside>
+      <section aria-labelledby="workspace-title">
+        <FileBreadcrumb currentFolderId={folderId} />
+        <header>
+          <div>
+            <p>ASTER DRIVE</p>
+            <h1 id="workspace-title">你的文件工作台</h1>
+            <output data-testid="workspace-location">{`${location.pathname}${location.search}`}</output>
+          </div>
+          <FileToolbar
+            onClearSelection={clearSelection}
+            onCreateFolder={handleCreateFolder}
+            onRefresh={handleRefresh}
+            onViewModeChange={setViewMode}
+            selectedCount={selectedIds.size}
+            selectedResource={selectedResource}
+            viewMode={viewMode}
+          />
+        </header>
+        <ResourceFilterBar onChange={handleFilterChange} values={filterValues} />
+        {childrenQuery.isLoading ? <p role="status">正在加载文件…</p> : null}
+        {childrenQuery.isError ? (
+          <div role="alert">
+            <p>
+              {childrenQuery.error instanceof Error
+                ? childrenQuery.error.message
+                : '加载文件失败'}
+            </p>
+            <button type="button" onClick={() => void refetch()}>
+              重新加载
+            </button>
+          </div>
+        ) : null}
+        {!childrenQuery.isLoading &&
+        !childrenQuery.isError &&
+        childrenQuery.items.length === 0 ? (
+          <p data-testid="file-empty-state">当前目录暂无文件</p>
+        ) : null}
+        {!childrenQuery.isLoading &&
+        !childrenQuery.isError &&
+        childrenQuery.items.length > 0 ? (
+          viewMode === 'list' ? (
+            <FileList
+              items={childrenQuery.items}
+              onOpen={handleOpen}
+              onToggle={toggleSelection}
+              selectedIds={selectedIds}
+            />
+          ) : (
+            <FileGrid
+              items={childrenQuery.items}
+              onOpen={handleOpen}
+              onToggle={toggleSelection}
+              selectedIds={selectedIds}
+            />
+          )
+        ) : null}
+        {childrenQuery.hasNextPage ? (
+          <button
+            type="button"
+            onClick={() => void childrenQuery.loadMore()}
+            disabled={childrenQuery.isFetchingNextPage}
+          >
+            {childrenQuery.isFetchingNextPage ? '正在加载更多…' : '加载更多'}
+          </button>
+        ) : null}
+      </section>
+    </div>
+  );
+}

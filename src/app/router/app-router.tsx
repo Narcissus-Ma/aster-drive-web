@@ -5,10 +5,11 @@ import {
   AuthSessionProvider,
   useAuthSession,
 } from '../../features/auth/hooks/use-auth-session';
-import { HomePage } from '../../pages/home-page/home-page';
+import { AppShell } from '../layouts/app-shell';
+import { DrivePage } from '../../pages/drive-page/drive-page';
 import { LoginPage } from '../../pages/login-page/login-page';
 
-function ProtectedHomePage(): JSX.Element {
+function ProtectedDrivePage(): JSX.Element {
   const { status } = useAuthSession();
 
   if (status === 'checking') {
@@ -27,12 +28,17 @@ function ProtectedHomePage(): JSX.Element {
     return <Navigate to="/login" replace />;
   }
 
-  return <HomePage />;
+  return (
+    <AppShell>
+      <DrivePage />
+    </AppShell>
+  );
 }
 
 const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
-  { path: '/', element: <ProtectedHomePage /> },
+  { path: '/', element: <ProtectedDrivePage /> },
+  { path: '/drive/:folderId?', element: <ProtectedDrivePage /> },
   { path: '*', element: <Navigate to="/" replace /> },
 ]);
 

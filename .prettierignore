@@ -1,0 +1,9 @@
+.agents/skills/
+.git/
+.yarn/
+dist/
+node_modules/
+coverage/
+playwright-report/
+test-results/
+yarn.lock

@@ -1,0 +1,108 @@
+.panel {
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  gap: 10px;
+  margin: 12px 0;
+  padding: 14px;
+  border: 1px solid #d7deeb;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.panelHeader,
+.taskHeader,
+.taskFooter,
+.actions {
+  display: flex;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.panelHeader {
+  -webkit-box-pack: justify;
+  -ms-flex-pack: justify;
+  justify-content: space-between;
+}
+
+.panelHeader h2 {
+  margin: 0;
+  color: #172033;
+  font-size: 15px;
+}
+
+.panelHeader button,
+.actions button {
+  padding: 4px 8px;
+  border: 1px solid #d7deeb;
+  border-radius: 7px;
+  color: #34405a;
+  background: #ffffff;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.list {
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.task {
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.taskHeader,
+.taskFooter {
+  -webkit-box-pack: justify;
+  -ms-flex-pack: justify;
+  justify-content: space-between;
+}
+
+.name {
+  overflow: hidden;
+  color: #172033;
+  font-size: 13px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status,
+.message {
+  color: #6c7893;
+  font-size: 12px;
+}
+
+.message {
+  min-height: 18px;
+}
+
+.progress {
+  width: 100%;
+  height: 7px;
+  accent-color: #536dfe;
+}
+
+.actions {
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+  -webkit-box-pack: end;
+  -ms-flex-pack: end;
+  justify-content: flex-end;
+}

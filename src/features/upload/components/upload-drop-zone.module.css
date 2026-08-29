@@ -1,0 +1,49 @@
+.dropZone {
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 230px;
+  padding: 10px 14px;
+  border: 1px dashed #b7c2dc;
+  border-radius: 10px;
+  color: #34405a;
+  background: #f7f9ff;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+.dropZone:hover,
+.dropZone.dragging {
+  border-color: #536dfe;
+  background: #eef1ff;
+}
+
+.dropZone:has(.input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.title {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.hint {
+  color: #6c7893;
+  font-size: 11px;
+}
+
+.input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}

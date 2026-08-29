@@ -1,10 +1,15 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import type {
   ResourceKind,
   ResourceResponse,
 } from '../../../shared/api/generated/openapi';
+import { NameConflictDialog } from '../../upload/components/name-conflict-dialog';
+import { UploadDropZone } from '../../upload/components/upload-drop-zone';
+import { UploadTaskPanel } from '../../upload/components/upload-task-panel';
+import { useUploadManager } from '../../upload/hooks/use-upload-manager';
+import type { UploadTask } from '../../upload/models/upload-task';
 import { useFileSelection } from '../hooks/use-file-selection';
 import { useFileViewState } from '../hooks/use-file-view-state';
 import {
@@ -16,6 +21,7 @@ import { FileBreadcrumb } from './file-breadcrumb';
 import { FileGrid } from './file-grid';
 import { FileList } from './file-list';
 import { FileToolbar } from './file-toolbar';
+import styles from './file-workspace.module.css';
 import { ResourceFilterBar, type ResourceFilterValues } from './resource-filter-bar';
 
 const ROOT_RESOURCE_ID = import.meta.env.VITE_ROOT_RESOURCE_ID ?? '';
@@ -61,11 +67,21 @@ export function FileWorkspace(): JSX.Element {
     [filterValues, parentId],
   );
   const childrenQuery = useFolderChildren(query);
+  const {
+    cancel: cancelUpload,
+    clearCompleted: clearCompletedUploads,
+    conflictTask,
+    enqueueFiles,
+    retry: retryUpload,
+    retryName,
+    tasks: uploadTasks,
+  } = useUploadManager({ parentId });
   const selectedIds = useFileSelection((state) => state.selectedIds);
   const toggleSelection = useFileSelection((state) => state.toggle);
   const clearSelection = useFileSelection((state) => state.clear);
   const viewMode = useFileViewState((state) => state.viewMode);
   const setViewMode = useFileViewState((state) => state.setViewMode);
+  const [conflictTaskId, setConflictTaskId] = useState<string | null>(null);
   const refetch = childrenQuery.refetch;
 
   useEffect(() => {
@@ -102,6 +118,34 @@ export function FileWorkspace(): JSX.Element {
     void refetch();
   }, [refetch]);
 
+  const handleFilesSelected = useCallback(
+    (files: File[]) => {
+      void enqueueFiles(files);
+    },
+    [enqueueFiles],
+  );
+
+  const handleResolveNameConflict = useCallback((task: UploadTask) => {
+    setConflictTaskId(task.id);
+  }, []);
+
+  const selectedConflictTask = useMemo(
+    () =>
+      conflictTaskId === null
+        ? null
+        : (uploadTasks.find((task) => task.id === conflictTaskId) ?? conflictTask),
+    [conflictTask, conflictTaskId, uploadTasks],
+  );
+
+  const handleConflictSubmit = useCallback(
+    (task: (typeof uploadTasks)[number], name: string) => {
+      void retryName(task, name)
+        .catch(() => undefined)
+        .finally(() => setConflictTaskId(null));
+    },
+    [retryName],
+  );
+
   return (
     <div data-testid="file-workspace" className="file-workspace">
       <aside>
@@ -115,17 +159,30 @@ export function FileWorkspace(): JSX.Element {
             <h1 id="workspace-title">你的文件工作台</h1>
             <output data-testid="workspace-location">{`${location.pathname}${location.search}`}</output>
           </div>
-          <FileToolbar
-            onClearSelection={clearSelection}
-            onCreateFolder={handleCreateFolder}
-            onRefresh={handleRefresh}
-            onViewModeChange={setViewMode}
-            selectedCount={selectedIds.size}
-            selectedResource={selectedResource}
-            viewMode={viewMode}
-          />
+          <div className={styles.workspaceActions}>
+            <FileToolbar
+              onClearSelection={clearSelection}
+              onCreateFolder={handleCreateFolder}
+              onRefresh={handleRefresh}
+              onViewModeChange={setViewMode}
+              selectedCount={selectedIds.size}
+              selectedResource={selectedResource}
+              viewMode={viewMode}
+            />
+            <UploadDropZone
+              disabled={parentId.length === 0}
+              onFilesSelected={handleFilesSelected}
+            />
+          </div>
         </header>
         <ResourceFilterBar onChange={handleFilterChange} values={filterValues} />
+        <UploadTaskPanel
+          onCancel={cancelUpload}
+          onClearCompleted={clearCompletedUploads}
+          onResolveNameConflict={handleResolveNameConflict}
+          onRetry={retryUpload}
+          tasks={uploadTasks}
+        />
         {childrenQuery.isLoading ? <p role="status">正在加载文件…</p> : null}
         {childrenQuery.isError ? (
           <div role="alert">
@@ -173,6 +230,11 @@ export function FileWorkspace(): JSX.Element {
           </button>
         ) : null}
       </section>
+      <NameConflictDialog
+        onCancel={() => setConflictTaskId(null)}
+        onSubmit={handleConflictSubmit}
+        task={selectedConflictTask}
+      />
     </div>
   );
 }

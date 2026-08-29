@@ -83,7 +83,9 @@ function createTypeFormatter() {
 }
 
 function responseType(operation, typeFor) {
-  const response = operation.responses?.['200'] ?? operation.responses?.['201'];
+  const response = Object.entries(operation.responses ?? {}).find(([status]) =>
+    /^2\d\d$/.test(status),
+  )?.[1];
   const schema = response?.content?.['application/json']?.schema;
   return typeFor(schema);
 }

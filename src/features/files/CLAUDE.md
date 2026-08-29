@@ -2,7 +2,7 @@
 
 ## 维护触发器
 
-当资源 API 契约、目录路由参数、筛选排序字段、权限 capability 或列表渲染模式发生变化时，需要同步更新本文档、对应测试和 `openapi.lock.json`。
+当资源/上传 API 契约、目录路由参数、筛选排序字段、权限 capability 或列表渲染模式发生变化时，需要同步更新本文档、对应测试和 `openapi.lock.json`。
 
 ## 功能概述
 
@@ -19,7 +19,8 @@ src/features/files/
 │   ├── file-grid.tsx                   # 宫格渲染
 │   ├── file-list.tsx                   # 列表与长列表虚拟化
 │   ├── file-toolbar.tsx                # 工具栏与 capability 菜单
-│   ├── file-workspace.tsx              # feature 组合入口
+│   ├── file-workspace.module.css       # 工作区操作区响应式布局
+│   ├── file-workspace.tsx              # feature 组合入口与上传入口
 │   └── resource-row.tsx                # 单个资源行与键盘入口
 ├── hooks/
 │   ├── use-file-selection.ts           # 选择状态公开入口
@@ -43,14 +44,15 @@ src/features/files/
 ## 已实现功能
 
 - React Router `/drive/:folderId?` 工作区路由和认证守卫。
-- children/detail API 请求、固定 `api-v0.2.0` OpenAPI Client。
+- children/detail API 请求、固定 `api-v0.3.0` OpenAPI Client。
 - 列表/宫格、目录树、面包屑、筛选排序、多选、空/错/加载状态。
 - 基于后端 capabilities 的重命名、移动、回收站和下载菜单禁用状态。
+- 上传拖拽/文件选择、任务队列、进度、取消、续签和名称冲突恢复入口。
 - 退出登录入口与响应错误恢复测试。
 
 ## 缺失功能
 
-- **P0**：新建文件夹、上传、下载 URL、重命名、移动、回收站实际 mutation API。
+- **P0**：新建文件夹、下载 URL、重命名、移动、回收站实际 mutation API。
 - **P0**：根目录 ID 由后端 current-user DTO 返回；当前可通过 `VITE_ROOT_RESOURCE_ID` 配置无参数 `/drive` 路由。
 - **P1**：与我共享、最近、收藏和回收站视图的后端 Views API。
 - **P1**：重型预览器、拖拽排序和移动端布局。

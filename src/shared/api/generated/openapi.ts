@@ -80,6 +80,44 @@ export interface TokenResponse {
   token_type?: string;
 }
 
+export interface UploadSessionCompleteRequest {
+  detected_mime?: string | null;
+  etag?: string | null;
+  name?: string | null;
+  size_bytes?: number | null;
+}
+
+export interface UploadSessionCreateRequest {
+  client_upload_id: string;
+  declared_mime?: string | null;
+  name: string;
+  parent_id: string;
+  size_bytes?: number | null;
+}
+
+export interface UploadSessionResponse {
+  client_upload_id: string;
+  created_at: string;
+  declared_mime?: string | null;
+  detected_mime?: string | null;
+  expected_etag?: string | null;
+  expected_size?: number | null;
+  expires_at: string;
+  final_object_key?: string | null;
+  id: string;
+  name: string;
+  parent_id: string;
+  resource_id?: string | null;
+  status: UploadSessionStatus;
+  temp_object_key: string;
+  updated_at: string;
+  upload_url?: string | null;
+  upload_url_expires_at: string;
+  user_id: string;
+}
+
+export type UploadSessionStatus = "pending" | "finalizing" | "completed" | "failed" | "aborted" | "expired";
+
 export interface UserResponse {
   display_name: string;
   email: string;
@@ -138,6 +176,36 @@ export interface ApiPathMap {
     post: {
       request: ResourceMoveRequest;
       response: ResourceResponse;
+    };
+  };
+  "/api/v1/uploads/sessions": {
+    post: {
+      request: UploadSessionCreateRequest;
+      response: UploadSessionResponse;
+    };
+  };
+  "/api/v1/uploads/sessions/{session_id}": {
+    get: {
+      request: undefined;
+      response: UploadSessionResponse;
+    };
+  };
+  "/api/v1/uploads/sessions/{session_id}/abort": {
+    post: {
+      request: undefined;
+      response: UploadSessionResponse;
+    };
+  };
+  "/api/v1/uploads/sessions/{session_id}/complete": {
+    post: {
+      request: UploadSessionCompleteRequest;
+      response: UploadSessionResponse;
+    };
+  };
+  "/api/v1/uploads/sessions/{session_id}/renew": {
+    post: {
+      request: undefined;
+      response: UploadSessionResponse;
     };
   };
   "/api/v1/users/me": {

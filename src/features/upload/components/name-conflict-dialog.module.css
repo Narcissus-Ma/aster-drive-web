@@ -1,0 +1,80 @@
+.backdrop {
+  position: fixed;
+  z-index: 20;
+  inset: 0;
+  display: flex;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgb(23 32 51 / 40%);
+}
+
+.dialog {
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  gap: 10px;
+  width: min(100%, 420px);
+  padding: 20px;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 18px 48px rgb(23 32 51 / 20%);
+}
+
+.dialog h2,
+.dialog p {
+  margin: 0;
+}
+
+.dialog h2 {
+  color: #172033;
+  font-size: 18px;
+}
+
+.dialog p {
+  color: #6c7893;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.dialog label {
+  color: #34405a;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.dialog input {
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid #d7deeb;
+  border-radius: 8px;
+}
+
+.actions {
+  display: flex;
+  -webkit-box-pack: end;
+  -ms-flex-pack: end;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.actions button {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid #d7deeb;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.actions button[type='submit'] {
+  border-color: #536dfe;
+  color: #ffffff;
+  background: #536dfe;
+}

@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Navigate, RouterProvider, createBrowserRouter } from 'react-router-dom';
 
 import { zhCN } from '../../locales/zh-CN';
@@ -11,6 +12,12 @@ import { LoginPage } from '../../pages/login-page/login-page';
 import { TrashPage } from '../../features/trash/components/trash-page';
 import { SystemViewPage } from '../../features/system-views/components/system-view-page';
 import type { SystemViewKind } from '../../features/system-views/system-views';
+
+const DocumentEditorPage = lazy(() =>
+  import('../../features/document-editor/components/document-editor-page').then(
+    ({ DocumentEditorPage: component }) => ({ default: component }),
+  ),
+);
 
 interface ProtectedPageProps {
   children: JSX.Element;
@@ -62,6 +69,14 @@ function ProtectedSystemViewPage({ view }: { view: SystemViewKind }): JSX.Elemen
   );
 }
 
+function ProtectedDocumentEditorPage(): JSX.Element {
+  return (
+    <ProtectedPage>
+      <DocumentEditorPage />
+    </ProtectedPage>
+  );
+}
+
 const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
   { path: '/', element: <ProtectedDrivePage /> },
@@ -72,13 +87,25 @@ const router = createBrowserRouter([
   },
   { path: '/recent', element: <ProtectedSystemViewPage view="recent" /> },
   { path: '/trash', element: <ProtectedTrashPage /> },
+  { path: '/documents/:resourceId', element: <ProtectedDocumentEditorPage /> },
   { path: '*', element: <Navigate to="/" replace /> },
 ]);
 
 export function AppRouter(): JSX.Element {
   return (
     <AuthSessionProvider>
-      <RouterProvider router={router} />
+      <Suspense
+        fallback={
+          <main className="app-shell" aria-busy="true">
+            <section className="welcome-card">
+              <p className="eyebrow">{zhCN.app.brand}</p>
+              <p className="welcome-copy">正在加载编辑器…</p>
+            </section>
+          </main>
+        }
+      >
+        <RouterProvider router={router} />
+      </Suspense>
     </AuthSessionProvider>
   );
 }

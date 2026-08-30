@@ -14,6 +14,24 @@ export interface ContentAccessResponse {
   url: string;
 }
 
+export interface DocumentContentRequest {
+  base_revision?: number | null;
+  content: Record<string, unknown>;
+  idempotency_key?: string | null;
+  revision?: number | null;
+}
+
+export interface DocumentContentResponse {
+  capabilities?: ResourceCapabilities;
+  content: Record<string, unknown>;
+  content_hash: string;
+  effective_role?: string;
+  resource_id: string;
+  revision: number;
+  updated_at?: string | null;
+  updated_by?: string | null;
+}
+
 export interface ErrorResponse {
   code: string;
   fields?: Record<string, unknown> | null;
@@ -178,6 +196,16 @@ export interface ApiPathMap {
     get: {
       request: undefined;
       response: unknown;
+    };
+  };
+  "/api/v1/documents/{resource_id}": {
+    get: {
+      request: undefined;
+      response: DocumentContentResponse;
+    };
+    put: {
+      request: DocumentContentRequest;
+      response: DocumentContentResponse;
     };
   };
   "/api/v1/resources/documents": {

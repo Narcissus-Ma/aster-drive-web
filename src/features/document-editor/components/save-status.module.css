@@ -1,0 +1,15 @@
+.container {
+  display: flex;
+  min-height: 24px;
+  align-items: center;
+  gap: 8px;
+  color: var(--document-muted, #6c7893);
+  font-size: 12px;
+}
+
+.detail {
+  overflow: hidden;
+  color: var(--document-danger, #c63d3d);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

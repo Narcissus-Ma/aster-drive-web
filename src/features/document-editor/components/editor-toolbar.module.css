@@ -1,0 +1,39 @@
+.toolbar {
+  display: flex;
+  min-height: 40px;
+  padding: 6px;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--document-border, #d7deeb);
+  border-radius: 10px;
+  background: var(--document-surface, #ffffff);
+  flex-wrap: wrap;
+}
+
+.button {
+  min-height: 30px;
+  padding: 0 9px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--document-ink, #26324a);
+  background: transparent;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.button:hover:not(:disabled),
+.button:focus-visible {
+  border-color: var(--document-border, #d7deeb);
+  background: var(--document-hover, #f1f5fb);
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.separator {
+  width: 1px;
+  height: 22px;
+  background: var(--document-border, #d7deeb);
+}

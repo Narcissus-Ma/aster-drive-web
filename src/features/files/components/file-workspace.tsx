@@ -124,6 +124,12 @@ export function FileWorkspace(): JSX.Element {
         navigate(`/drive/${encodeURIComponent(resource.id)}`);
         return;
       }
+      if (resource.kind === 'document') {
+        navigate(`/documents/${encodeURIComponent(resource.id)}`, {
+          state: { resourceName: resource.name },
+        });
+        return;
+      }
       setPreviewResource(resource);
     },
     [navigate],

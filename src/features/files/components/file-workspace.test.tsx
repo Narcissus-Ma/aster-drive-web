@@ -213,6 +213,34 @@ describe('文件工作区', () => {
     );
   });
 
+  it('点击文档后进入原生编辑器路由', async () => {
+    const document = resource({
+      id: 'document-a',
+      kind: 'document',
+      name: '项目笔记',
+      name_key: '项目笔记',
+      capabilities: {
+        can_download: true,
+        can_edit_content: true,
+      },
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify({ items: [document], next_cursor: null }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+      ),
+    );
+    renderWorkspace();
+
+    await userEvent.click(await screen.findByRole('button', { name: /项目笔记/ }));
+
+    expect(screen.getByTestId('location')).toHaveTextContent('/documents/document-a');
+  });
+
   it('版本冲突后刷新资源并保留重命名对话框输入', async () => {
     const editableResource = resource({
       capabilities: {

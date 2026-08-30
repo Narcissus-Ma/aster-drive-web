@@ -1,0 +1,64 @@
+.backdrop {
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  display: flex;
+  padding: 20px;
+  align-items: center;
+  justify-content: center;
+  background: rgb(23 32 51 / 32%);
+}
+
+.dialog {
+  width: min(100%, 440px);
+  padding: 24px;
+  border: 1px solid var(--document-border, #d7deeb);
+  border-radius: 12px;
+  background: var(--document-surface, #ffffff);
+  box-shadow: 0 20px 48px rgb(23 32 51 / 18%);
+}
+
+.dialog h2 {
+  margin: 0 0 10px;
+  color: var(--document-ink, #172033);
+  font-size: 18px;
+}
+
+.dialog p {
+  margin: 8px 0;
+  color: var(--document-muted, #6c7893);
+  line-height: 1.6;
+}
+
+.dialog p[role='alert'] {
+  color: var(--document-danger, #c63d3d);
+}
+
+.actions {
+  display: flex;
+  margin-top: 20px;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.actions button {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--document-border, #d7deeb);
+  border-radius: 8px;
+  color: var(--document-ink, #26324a);
+  background: var(--document-surface, #ffffff);
+  cursor: pointer;
+}
+
+.actions button:last-child {
+  border-color: var(--document-primary, #2f6fed);
+  color: #ffffff;
+  background: var(--document-primary, #2f6fed);
+}
+
+.actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}

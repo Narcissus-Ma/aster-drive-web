@@ -38,6 +38,22 @@ button {
   cursor: pointer;
 }
 
+:focus-visible {
+  outline: 3px solid #1f4fc4;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
 #root {
   min-height: 100vh;
 }
@@ -79,6 +95,33 @@ h1 {
   color: #65738b;
   font-size: 16px;
   line-height: 1.7;
+}
+
+.error-boundary {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 32px;
+  color: #172033;
+  background: #f5f7fb;
+}
+
+.error-boundary p {
+  max-width: 48ch;
+  color: #65738b;
+  line-height: 1.7;
+}
+
+.error-boundary button {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 8px;
+  color: #ffffff;
+  background: #1f4fc4;
+  font-weight: 700;
 }
 
 @media (max-width: 600px) {

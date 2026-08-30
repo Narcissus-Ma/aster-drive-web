@@ -28,6 +28,7 @@ export function ResourceFilterBar({
         资源类型
         <select
           aria-label="资源类型"
+          name="resource-kind"
           value={values.kind ?? ''}
           onChange={(event) =>
             onChange({
@@ -47,6 +48,7 @@ export function ResourceFilterBar({
         更新时间起
         <input
           aria-label="更新时间起"
+          name="updated-from"
           type="datetime-local"
           value={values.updatedFrom ?? ''}
           onChange={(event) =>
@@ -58,6 +60,7 @@ export function ResourceFilterBar({
         更新时间止
         <input
           aria-label="更新时间止"
+          name="updated-to"
           type="datetime-local"
           value={values.updatedTo ?? ''}
           onChange={(event) => onChange({ updatedTo: event.target.value || undefined })}
@@ -67,6 +70,7 @@ export function ResourceFilterBar({
         排序字段
         <select
           aria-label="排序字段"
+          name="sort-by"
           value={values.sortBy}
           onChange={(event) =>
             onChange({ sortBy: event.target.value as ResourceSortBy })
@@ -80,6 +84,7 @@ export function ResourceFilterBar({
         排序方向
         <select
           aria-label="排序方向"
+          name="sort-direction"
           value={values.sortDirection}
           onChange={(event) =>
             onChange({ sortDirection: event.target.value as ResourceSortDirection })

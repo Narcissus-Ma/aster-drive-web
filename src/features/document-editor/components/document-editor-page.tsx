@@ -156,7 +156,11 @@ export function DocumentEditorPage({
   }, [onSaveAsCopy]);
 
   return (
-    <main className={styles.page}>
+    <main
+      className={styles.page}
+      aria-labelledby="document-title"
+      aria-busy={editorState.isLoading || isReloading}
+    >
       <header className={styles.header}>
         <div className={styles.heading}>
           <button className={styles.backButton} type="button" onClick={handleClose}>
@@ -164,7 +168,7 @@ export function DocumentEditorPage({
           </button>
           <div>
             <p className={styles.eyebrow}>ASTER DRIVE</p>
-            <h1>{resourceName}</h1>
+            <h1 id="document-title">{resourceName}</h1>
           </div>
         </div>
         <SaveStatus
@@ -177,12 +181,12 @@ export function DocumentEditorPage({
       <section aria-label="文档编辑器" className={styles.workspace}>
         <EditorToolbar disabled={!editorState.canEdit} editor={editor} />
         {editorState.isLoading ? (
-          <p className={styles.feedback} role="status">
+          <p className={styles.feedback} role="status" aria-live="polite">
             正在加载文档…
           </p>
         ) : null}
         {editorState.isError ? (
-          <div className={styles.feedback} role="alert">
+          <div className={styles.feedback} role="alert" aria-live="assertive">
             <p>{editorState.error?.message ?? '文档加载失败，请稍后重试'}</p>
             <button type="button" onClick={() => void editorState.reload()}>
               重新加载
@@ -193,7 +197,7 @@ export function DocumentEditorPage({
           <EditorContent className={styles.editorContent} editor={editor} />
         </div>
         {copyNotice ? (
-          <p className={styles.notice} role="status">
+          <p className={styles.notice} role="status" aria-live="polite">
             {copyNotice}
           </p>
         ) : null}

@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useRef } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 
 import type { ResourceResponse } from '../../../shared/api/generated/openapi';
@@ -26,22 +26,28 @@ export function FileList({
   const rowVirtualizer = useVirtualizer({
     count: shouldVirtualize ? items.length : 0,
     getScrollElement: () => parentRef.current,
+    getItemKey: (index) => items[index]?.id ?? index,
     estimateSize: () => 56,
     overscan: 8,
   });
-  const visibleItems = useMemo(
-    () =>
-      shouldVirtualize
-        ? rowVirtualizer.getVirtualItems().map((item) => items[item.index])
-        : items,
-    [items, rowVirtualizer, shouldVirtualize],
-  );
+  const virtualItems = shouldVirtualize ? rowVirtualizer.getVirtualItems() : [];
+  const visibleItems = shouldVirtualize
+    ? virtualItems.length > 0
+      ? virtualItems
+          .map((item) => items[item.index])
+          .filter((item): item is ResourceResponse => item !== undefined)
+      : items.slice(0, 20)
+    : items;
 
   return (
     <div
       ref={parentRef}
       data-testid="file-list-scroll"
-      style={{ maxHeight: 'min(62vh, 640px)', overflow: 'auto' }}
+      style={{
+        maxHeight: 'min(62vh, 640px)',
+        overflow: 'auto',
+        overscrollBehavior: 'contain',
+      }}
     >
       <ul
         data-testid="file-list"
@@ -49,6 +55,7 @@ export function FileList({
         style={
           shouldVirtualize
             ? {
+                contain: 'layout paint style',
                 height: `${rowVirtualizer.getTotalSize()}px`,
                 position: 'relative',
               }
@@ -57,9 +64,7 @@ export function FileList({
       >
         {visibleItems.map((item) => {
           const virtualItem = shouldVirtualize
-            ? rowVirtualizer
-                .getVirtualItems()
-                .find((entry) => items[entry.index]?.id === item.id)
+            ? virtualItems.find((entry) => items[entry.index]?.id === item.id)
             : undefined;
           return (
             <ResourceRow
@@ -70,9 +75,16 @@ export function FileList({
               onToggle={onToggle}
               resource={item}
               selected={selectedIds.has(item.id)}
+              positionInSet={
+                shouldVirtualize
+                  ? items.findIndex((entry) => entry.id === item.id) + 1
+                  : items.indexOf(item) + 1
+              }
+              setSize={items.length}
               style={
                 virtualItem
                   ? {
+                      contain: 'layout paint style',
                       position: 'absolute',
                       top: 0,
                       width: '100%',

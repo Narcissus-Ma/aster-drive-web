@@ -10,7 +10,7 @@ export function DrivePage(): JSX.Element {
     return <SharedWithMePage />;
   }
   return (
-    <main className={styles.page}>
+    <main className={styles.page} aria-label="文件工作台">
       <FileWorkspace />
     </main>
   );

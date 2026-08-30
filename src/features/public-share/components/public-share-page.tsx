@@ -63,10 +63,27 @@ function renderContentAccess(access: PublicContentResponse): JSX.Element {
     return <p className={styles.feedback}>该文件暂不支持在线预览，请下载查看。</p>;
   }
   if (access.detected_mime.startsWith('image/')) {
-    return <img className={styles.image} src={access.url} alt={access.filename} />;
+    return (
+      <img
+        className={styles.image}
+        src={access.url}
+        alt={access.filename}
+        decoding="async"
+        loading="lazy"
+        referrerPolicy="no-referrer"
+      />
+    );
   }
   if (access.detected_mime === 'application/pdf') {
-    return <iframe className={styles.pdf} title={access.filename} src={access.url} />;
+    return (
+      <iframe
+        className={styles.pdf}
+        title={access.filename}
+        src={access.url}
+        loading="lazy"
+        referrerPolicy="no-referrer"
+      />
+    );
   }
   return (
     <p className={styles.feedback}>浏览器可直接打开此文件，或使用下方下载链接保存。</p>
@@ -86,7 +103,7 @@ export function PublicSharePage(): JSX.Element {
   if (query.isLoading) {
     return (
       <main className={styles.page}>
-        <p className={styles.feedback} role="status">
+        <p className={styles.feedback} role="status" aria-live="polite">
           正在加载公开内容…
         </p>
       </main>
@@ -95,7 +112,7 @@ export function PublicSharePage(): JSX.Element {
   if (query.isError || !share) {
     return (
       <main className={styles.page}>
-        <section className={styles.card} role="alert">
+        <section className={styles.card} role="alert" aria-live="assertive">
           <p className={styles.eyebrow}>ASTER DRIVE</p>
           <h1 className={styles.title}>公开链接无效或已失效</h1>
           <p className={styles.feedback}>
@@ -110,10 +127,12 @@ export function PublicSharePage(): JSX.Element {
   const preview = share.preview;
   const download = share.download ?? preview;
   return (
-    <main className={styles.page}>
+    <main className={styles.page} aria-labelledby="public-share-title">
       <article className={styles.card}>
         <p className={styles.eyebrow}>ASTER DRIVE · 只读公开内容</p>
-        <h1 className={styles.title}>{title}</h1>
+        <h1 id="public-share-title" className={styles.title}>
+          {title}
+        </h1>
         <div className={styles.meta}>
           <span>{share.kind === 'document' ? '文档' : '文件'}</span>
           <span>只读</span>

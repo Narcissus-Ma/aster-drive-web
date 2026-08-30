@@ -91,6 +91,22 @@ export function PreviewDrawer({
     closeButtonRef.current?.focus();
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onCloseRef.current();
+      if (event.key !== 'Tab' || !event.currentTarget) return;
+      const focusable = Array.from(
+        document.querySelectorAll<HTMLElement>(
+          '[data-testid="preview-drawer"] button, [data-testid="preview-drawer"] a, [data-testid="preview-drawer"] iframe',
+        ),
+      ).filter((element) => !element.hasAttribute('disabled'));
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => {
@@ -109,7 +125,9 @@ export function PreviewDrawer({
   return (
     <div
       aria-labelledby="preview-drawer-title"
+      aria-describedby="preview-drawer-description"
       aria-modal="true"
+      aria-busy={previewQuery.isLoading}
       className={styles.backdrop}
       data-testid="preview-drawer"
       onMouseDown={handleBackdropClick}
@@ -127,9 +145,12 @@ export function PreviewDrawer({
             关闭预览
           </button>
         </header>
+        <p id="preview-drawer-description" className={styles.feedback}>
+          文件预览内容，仅供当前会话查看。
+        </p>
         <div className={styles.body}>
           {previewQuery.isLoading ? (
-            <p className={styles.feedback} role="status">
+            <p className={styles.feedback} role="status" aria-live="polite">
               正在加载预览…
             </p>
           ) : null}

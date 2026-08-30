@@ -13,6 +13,9 @@ export interface AppShellProps extends PropsWithChildren {
 export function AppShell({ children }: AppShellProps): JSX.Element {
   return (
     <div className={styles.shell}>
+      <a className={styles.skipLink} data-testid="skip-link" href="#main-content">
+        跳到主要内容
+      </a>
       <header className={styles.header}>
         <div>
           <p className={styles.brand}>{zhCN.app.brand}</p>
@@ -29,7 +32,14 @@ export function AppShell({ children }: AppShellProps): JSX.Element {
           <Link to="/recent">最近使用</Link>
           <Link to="/trash">回收站</Link>
         </nav>
-        <div className={styles.content}>{children}</div>
+        <div
+          id="main-content"
+          data-testid="main-content"
+          className={styles.content}
+          tabIndex={-1}
+        >
+          {children}
+        </div>
       </div>
     </div>
   );

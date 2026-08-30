@@ -4,6 +4,24 @@
   background: #f5f7fb;
 }
 
+.skipLink {
+  position: absolute;
+  z-index: 100;
+  top: -48px;
+  left: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: #ffffff;
+  background: #1f4fc4;
+  font-weight: 700;
+  text-decoration: none;
+  transition: top 120ms ease;
+}
+
+.skipLink:focus-visible {
+  top: 12px;
+}
+
 .header {
   display: flex;
   align-items: center;

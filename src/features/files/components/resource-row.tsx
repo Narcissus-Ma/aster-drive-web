@@ -1,4 +1,4 @@
-import { useCallback, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 
 import type { ResourceResponse } from '../../../shared/api/generated/openapi';
 
@@ -12,8 +12,12 @@ export interface ResourceRowProps {
   onToggle: (resourceId: string) => void;
   resource: ResourceResponse;
   selected: boolean;
+  positionInSet?: number;
+  setSize?: number;
   style?: CSSProperties;
 }
+
+const dateFormatter = new Intl.DateTimeFormat('zh-CN');
 
 function capability(
   resource: ResourceResponse,
@@ -32,9 +36,13 @@ export function ResourceRow({
   onToggle,
   resource,
   selected,
+  positionInSet,
+  setSize,
   style,
 }: ResourceRowProps): JSX.Element {
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const handleOpen = useCallback(() => onOpen(resource), [onOpen, resource]);
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLLIElement>) => {
@@ -54,6 +62,20 @@ export function ResourceRow({
     [favorite, onFavoriteToggle, resource.id],
   );
   const toggleMenu = useCallback(() => setMenuOpen((open) => !open), []);
+  useEffect(() => {
+    if (!menuOpen) return;
+    menuRef.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus();
+  }, [menuOpen]);
+
+  const handleMenuKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      setMenuOpen(false);
+      menuButtonRef.current?.focus();
+    },
+    [],
+  );
   const handleShare = useCallback(() => {
     setMenuOpen(false);
     onShare?.(resource);
@@ -69,6 +91,8 @@ export function ResourceRow({
       tabIndex={0}
       onKeyDown={handleKeyDown}
       aria-selected={selected}
+      aria-setsize={setSize}
+      aria-posinset={positionInSet}
       style={style}
     >
       <input
@@ -79,7 +103,7 @@ export function ResourceRow({
       />
       <button type="button" onClick={handleOpen}>
         <span aria-hidden="true">{resource.kind === 'folder' ? '📁' : '📄'}</span>
-        <span>{resource.name}</span>
+        <span title={resource.name}>{resource.name}</span>
       </button>
       {onFavoriteToggle ? (
         <button
@@ -92,23 +116,31 @@ export function ResourceRow({
         </button>
       ) : null}
       <time dateTime={resource.updated_at}>
-        {new Date(resource.updated_at).toLocaleDateString('zh-CN')}
+        {dateFormatter.format(new Date(resource.updated_at))}
       </time>
       {metaLabel ? <span aria-label="资源权限">{metaLabel}</span> : null}
       <button
         type="button"
         aria-label="文件操作"
+        aria-haspopup="menu"
         aria-expanded={menuOpen}
+        ref={menuButtonRef}
         onClick={toggleMenu}
       >
         ⋯
       </button>
       {menuOpen ? (
-        <div role="menu" aria-label={`${resource.name} 操作`}>
+        <div
+          ref={menuRef}
+          role="menu"
+          aria-label={`${resource.name} 操作`}
+          onKeyDown={handleMenuKeyDown}
+        >
           <button
             role="menuitem"
             type="button"
             aria-disabled={!capability(resource, 'can_rename')}
+            disabled={!capability(resource, 'can_rename')}
           >
             重命名
           </button>
@@ -116,6 +148,7 @@ export function ResourceRow({
             role="menuitem"
             type="button"
             aria-disabled={!capability(resource, 'can_move')}
+            disabled={!capability(resource, 'can_move')}
           >
             移动到
           </button>
@@ -123,6 +156,7 @@ export function ResourceRow({
             role="menuitem"
             type="button"
             aria-disabled={!capability(resource, 'can_trash')}
+            disabled={!capability(resource, 'can_trash')}
           >
             移入回收站
           </button>
@@ -130,6 +164,7 @@ export function ResourceRow({
             role="menuitem"
             type="button"
             aria-disabled={!capability(resource, 'can_download')}
+            disabled={!capability(resource, 'can_download')}
           >
             下载
           </button>

@@ -356,11 +356,15 @@ export function FileWorkspace(): JSX.Element {
   );
 
   return (
-    <div data-testid="file-workspace" className="file-workspace">
+    <div
+      data-testid="file-workspace"
+      className="file-workspace"
+      aria-busy={childrenQuery.isFetching}
+    >
       <aside>
         <DirectoryTree currentFolderId={folderId} />
       </aside>
-      <section aria-labelledby="workspace-title">
+      <section aria-labelledby="workspace-title" aria-describedby="workspace-status">
         <FileBreadcrumb currentFolderId={folderId} />
         <header>
           <div>
@@ -388,6 +392,13 @@ export function FileWorkspace(): JSX.Element {
           </div>
         </header>
         <ResourceFilterBar onChange={handleFilterChange} values={filterValues} />
+        <p id="workspace-status" className={styles.visuallyHidden} aria-live="polite">
+          {childrenQuery.isLoading
+            ? '正在加载文件…'
+            : childrenQuery.isError
+              ? '加载文件失败'
+              : `当前目录有 ${childrenQuery.items.length} 个资源`}
+        </p>
         <UploadTaskPanel
           onCancel={cancelUpload}
           onClearCompleted={clearCompletedUploads}
@@ -395,9 +406,13 @@ export function FileWorkspace(): JSX.Element {
           onRetry={retryUpload}
           tasks={uploadTasks}
         />
-        {childrenQuery.isLoading ? <p role="status">正在加载文件…</p> : null}
+        {childrenQuery.isLoading ? (
+          <p role="status" aria-live="polite">
+            正在加载文件…
+          </p>
+        ) : null}
         {childrenQuery.isError ? (
-          <div role="alert">
+          <div role="alert" aria-live="assertive">
             <p>
               {childrenQuery.error instanceof Error
                 ? childrenQuery.error.message
@@ -441,6 +456,7 @@ export function FileWorkspace(): JSX.Element {
             type="button"
             onClick={() => void childrenQuery.loadMore()}
             disabled={childrenQuery.isFetchingNextPage}
+            aria-busy={childrenQuery.isFetchingNextPage}
           >
             {childrenQuery.isFetchingNextPage ? '正在加载更多…' : '加载更多'}
           </button>

@@ -48,4 +48,33 @@ describe('资源行收藏交互', () => {
     await userEvent.click(screen.getByRole('button', { name: '取消收藏 项目计划' }));
     expect(onFavoriteToggle).toHaveBeenLastCalledWith('resource-a', false);
   });
+
+  it('仅在 capability 允许时展示共享入口', async () => {
+    const onShare = vi.fn();
+    const { rerender } = render(
+      <ResourceRow
+        onOpen={vi.fn()}
+        onShare={onShare}
+        onToggle={vi.fn()}
+        resource={{ ...rowResource, capabilities: { can_share: true } }}
+        selected={false}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: '文件操作' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: '共享' }));
+    expect(onShare).toHaveBeenCalledWith(expect.objectContaining({ id: 'resource-a' }));
+
+    rerender(
+      <ResourceRow
+        onOpen={vi.fn()}
+        onShare={onShare}
+        onToggle={vi.fn()}
+        resource={rowResource}
+        selected={false}
+      />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: '文件操作' }));
+    expect(screen.queryByRole('menuitem', { name: '共享' })).not.toBeInTheDocument();
+  });
 });

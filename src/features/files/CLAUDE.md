@@ -21,7 +21,7 @@ src/features/files/
 │   ├── file-toolbar.tsx                # 工具栏与 capability 菜单
 │   ├── file-workspace.module.css       # 工作区操作区响应式布局
 │   ├── file-workspace.tsx              # feature 组合入口与上传入口
-│   └── resource-row.tsx                # 单个资源行与键盘入口
+│   └── resource-row.tsx                # 单个资源行、键盘入口和共享 capability 入口
 ├── hooks/
 │   ├── use-file-selection.ts           # 选择状态公开入口
 │   ├── use-file-view-state.ts          # 视图模式公开入口
@@ -36,7 +36,7 @@ src/features/files/
 ## 核心架构
 
 - URL 保存 `folderId`、类型/更新时间筛选和排序字段/方向，筛选变更使用浏览器历史记录，支持前进后退。
-- `useFolderChildren` 使用 TanStack Query 的 cursor infinite query，并按资源 ID 合并分页，避免重复项。
+- `useFolderChildren` 使用 TanStack Query 的 cursor infinite query，并按资源 ID 合并分页，避免重复项；共享视图使用独立 hook，不复用该去重策略。
 - 403 会刷新当前资源 detail/capabilities；404 会清理资源缓存并回退到有效父目录或工作区根路由。
 - 视图模式和选择 ID 使用按功能拆分的 Zustand store；不把服务端资源实体复制到全局 store。
 - 列表超过 50 项时启用 TanStack Virtual，仅渲染可见行；小列表保持完整语义树以便键盘和辅助技术访问。
@@ -44,9 +44,10 @@ src/features/files/
 ## 已实现功能
 
 - React Router `/drive/:folderId?` 工作区路由和认证守卫。
-- children/detail API 请求、固定 `api-v0.5.0` OpenAPI Client。
+- children/detail API 请求、固定 `api-v0.8.0` OpenAPI Client。
 - 列表/宫格、目录树、面包屑、筛选排序、多选、空/错/加载状态。
 - 基于后端 capabilities 的重命名、移动、回收站和下载菜单禁用状态。
+- 基于 `can_share` capability 的资源行/宫格共享入口，并在工作区组合共享对话框。
 - 上传拖拽/文件选择、任务队列、进度、取消、续签和名称冲突恢复入口。
 - 退出登录入口与响应错误恢复测试。
 
@@ -54,7 +55,7 @@ src/features/files/
 
 - **P0**：新建文件夹、下载 URL、重命名、移动、回收站实际 mutation API。
 - **P0**：根目录 ID 由后端 current-user DTO 返回；当前可通过 `VITE_ROOT_RESOURCE_ID` 配置无参数 `/drive` 路由。
-- **P1**：与我共享视图的后端 Views API；收藏与最近使用已迁移到独立系统视图模块。
+- **P1**：共享成员的用户搜索和批量授权；当前共享对话框要求输入已注册用户 ID。
 - **P1**：重型预览器、拖拽排序和移动端布局。
 
 ## 与旧组件映射

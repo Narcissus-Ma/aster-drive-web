@@ -1,0 +1,161 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  justify-content: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  padding: 20px;
+  background: rgba(23, 32, 51, 0.38);
+}
+
+.dialog {
+  width: min(620px, 100%);
+  max-height: min(760px, 90vh);
+  overflow: auto;
+  padding: 24px;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 20px 70px rgba(23, 32, 51, 0.22);
+}
+
+.header,
+.memberItem,
+.publicLinkRow,
+.inviteRow {
+  display: flex;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  gap: 10px;
+}
+
+.header {
+  justify-content: space-between;
+  -webkit-box-pack: justify;
+  -ms-flex-pack: justify;
+  margin-bottom: 22px;
+}
+
+.header h2,
+.dialog h3 {
+  margin: 0;
+}
+
+.dialog section + section {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e1e7f0;
+}
+
+.memberList {
+  display: flex;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.memberItem {
+  justify-content: space-between;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid #e1e7f0;
+  border-radius: 8px;
+}
+
+.memberItem select,
+.memberItem button,
+.publicLinkRow input,
+.publicLinkRow button,
+.inviteRow input,
+.inviteRow select,
+.inviteRow button,
+.header button,
+.dialog > button {
+  min-height: 34px;
+  border: 1px solid #d7deeb;
+  border-radius: 7px;
+  background: #ffffff;
+}
+
+.publicLinkRow {
+  align-items: flex-start;
+  -webkit-box-align: start;
+  -ms-flex-align: start;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+
+.publicLinkRow input {
+  flex: 1 1 260px;
+  min-width: 0;
+  padding: 0 8px;
+}
+
+.inviteRow {
+  margin-top: 12px;
+}
+
+.inviteRow input {
+  -webkit-box-flex: 1;
+  -ms-flex: 1;
+  flex: 1;
+  min-width: 0;
+  padding: 0 8px;
+}
+
+.muted,
+.roleText {
+  color: #6c7893;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 620px) {
+  .backdrop {
+    align-items: flex-end;
+    -webkit-box-align: end;
+    -ms-flex-align: end;
+    padding: 0;
+  }
+
+  .dialog {
+    max-height: 92vh;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .inviteRow {
+    align-items: stretch;
+    -webkit-box-align: stretch;
+    -ms-flex-align: stretch;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -ms-flex-direction: column;
+    flex-direction: column;
+  }
+}

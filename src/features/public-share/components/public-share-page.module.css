@@ -1,0 +1,128 @@
+.page {
+  min-height: 100vh;
+  padding: 32px 20px 56px;
+  color: #172033;
+  background: #f5f7fb;
+}
+
+.card {
+  width: min(900px, 100%);
+  margin: 0 auto;
+  padding: clamp(20px, 4vw, 44px);
+  border: 1px solid #e1e7f0;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 14px 44px rgba(23, 32, 51, 0.08);
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #536dfe;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(26px, 5vw, 42px);
+}
+
+.meta {
+  display: flex;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 12px 0 24px;
+  color: #6c7893;
+  font-size: 14px;
+}
+
+.document {
+  padding: 20px;
+  border: 1px solid #e1e7f0;
+  border-radius: 10px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.document h2,
+.document h3,
+.document h4,
+.document p,
+.document blockquote,
+.document pre {
+  margin: 0 0 14px;
+}
+
+.document blockquote {
+  padding-left: 14px;
+  border-left: 3px solid #c6cffd;
+  color: #4d5b73;
+}
+
+.document pre {
+  padding: 12px;
+  border-radius: 8px;
+  overflow: auto;
+  background: #f5f7fb;
+}
+
+.contentAccess {
+  display: flex;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  -webkit-box-align: start;
+  -ms-flex-align: start;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.image {
+  display: block;
+  max-width: 100%;
+  max-height: 68vh;
+  object-fit: contain;
+}
+
+.pdf {
+  width: 100%;
+  min-height: 68vh;
+  border: 1px solid #e1e7f0;
+}
+
+.actions {
+  display: flex;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.actions a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid #d7deeb;
+  border-radius: 8px;
+  color: #34405a;
+  text-decoration: none;
+}
+
+.feedback {
+  margin: 0;
+  color: #6c7893;
+}
+
+.error {
+  color: #a52828;
+}

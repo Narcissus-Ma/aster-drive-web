@@ -1,0 +1,94 @@
+.page {
+  min-height: 100%;
+  padding: 24px;
+}
+
+.header {
+  display: flex;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.header p,
+.header h1,
+.header span {
+  margin: 0;
+}
+
+.header p {
+  color: #536dfe;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+
+.header h1 {
+  color: #172033;
+  font-size: clamp(28px, 5vw, 40px);
+}
+
+.header span {
+  color: #6c7893;
+  font-size: 14px;
+}
+
+.list {
+  display: flex;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #e1e7f0;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.item > :first-child {
+  -webkit-box-flex: 1;
+  -ms-flex: 1;
+  flex: 1;
+  min-width: 0;
+}
+
+.role {
+  flex: 0 0 auto;
+  color: #6c7893;
+  font-size: 13px;
+}
+
+.loadMore {
+  min-height: 34px;
+  margin-top: 16px;
+  padding: 0 12px;
+  border: 1px solid #d7deeb;
+  border-radius: 8px;
+  color: #34405a;
+  background: #ffffff;
+}
+
+.feedback {
+  color: #6c7893;
+}

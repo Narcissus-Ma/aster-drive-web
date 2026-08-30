@@ -39,6 +39,24 @@ export interface ErrorResponse {
   request_id: string;
 }
 
+export interface GrantCreateRequest {
+  grantee_user_id: string;
+  role: "viewer" | "editor";
+}
+
+export interface GrantListResponse {
+  items: GrantResponse[];
+}
+
+export interface GrantResponse {
+  created_at: string;
+  granted_by: string;
+  grantee_user_id: string;
+  id: string;
+  resource_id: string;
+  role: "viewer" | "editor";
+}
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -46,6 +64,51 @@ export interface LoginRequest {
 
 export interface MessageResponse {
   status: string;
+}
+
+export interface PublicContentResponse {
+  declared_mime?: string | null;
+  detected_mime: string;
+  disposition: "inline" | "attachment";
+  etag: string;
+  expires_at: string;
+  filename: string;
+  mime_type: string;
+  previewable: boolean;
+  resource_id: string;
+  size_bytes: number;
+  url: string;
+}
+
+export interface PublicDocumentResponse {
+  content: Record<string, unknown>;
+  content_hash: string;
+  resource_id: string;
+  revision: number;
+  updated_at?: string | null;
+  updated_by?: string | null;
+}
+
+export interface PublicResourceResponse {
+  created_at: string;
+  declared_mime?: string | null;
+  detected_mime?: string | null;
+  id: string;
+  kind: ResourceKind;
+  name: string;
+  size_bytes?: number | null;
+  updated_at: string;
+  version: number;
+}
+
+export interface PublicShareResponse {
+  document?: PublicDocumentResponse | null;
+  download?: PublicContentResponse | null;
+  kind: ResourceKind;
+  preview?: PublicContentResponse | null;
+  read_only?: boolean;
+  resource: PublicResourceResponse;
+  resource_id: string;
 }
 
 export interface ResourceCapabilities {
@@ -108,6 +171,33 @@ export type ResourceState = "active" | "upload_pending" | "copy_pending" | "tras
 
 export interface ResourceVersionRequest {
   version: number;
+}
+
+export interface ShareLinkListResponse {
+  items: ShareLinkResponse[];
+}
+
+export interface ShareLinkResponse {
+  created_at: string;
+  created_by: string;
+  id: string;
+  resource_id: string;
+  revoked_at?: string | null;
+  role: string;
+  token?: string | null;
+  url?: string | null;
+}
+
+export interface SharedRootItemResponse {
+  capabilities: ResourceCapabilities;
+  effective_role: string;
+  grant: GrantResponse;
+  resource: ResourceResponse;
+}
+
+export interface SharedRootListResponse {
+  items: SharedRootItemResponse[];
+  next_cursor?: string | null;
 }
 
 export interface TokenResponse {
@@ -208,6 +298,12 @@ export interface ApiPathMap {
       response: DocumentContentResponse;
     };
   };
+  "/api/v1/public/share/{token}": {
+    get: {
+      request: undefined;
+      response: PublicShareResponse;
+    };
+  };
   "/api/v1/resources/documents": {
     post: {
       request: ResourceCreateRequest;
@@ -246,6 +342,22 @@ export interface ApiPathMap {
       response: ResourceResponse;
     };
   };
+  "/api/v1/resources/{resource_id}/grants": {
+    get: {
+      request: undefined;
+      response: GrantListResponse;
+    };
+    post: {
+      request: GrantCreateRequest;
+      response: GrantResponse;
+    };
+  };
+  "/api/v1/resources/{resource_id}/grants/{grantee_user_id}": {
+    delete: {
+      request: undefined;
+      response: MessageResponse;
+    };
+  };
   "/api/v1/resources/{resource_id}/move": {
     post: {
       request: ResourceMoveRequest;
@@ -262,6 +374,22 @@ export interface ApiPathMap {
     post: {
       request: ResourceVersionRequest;
       response: ResourceResponse;
+    };
+  };
+  "/api/v1/resources/{resource_id}/share-links": {
+    get: {
+      request: undefined;
+      response: ShareLinkListResponse;
+    };
+    post: {
+      request: undefined;
+      response: ShareLinkResponse;
+    };
+  };
+  "/api/v1/resources/{resource_id}/share-links/{link_id}": {
+    delete: {
+      request: undefined;
+      response: MessageResponse;
     };
   };
   "/api/v1/search": {
@@ -332,6 +460,12 @@ export interface ApiPathMap {
     post: {
       request: undefined;
       response: ResourceResponse;
+    };
+  };
+  "/api/v1/views/shared": {
+    get: {
+      request: undefined;
+      response: SharedRootListResponse;
     };
   };
   "/health/live": {

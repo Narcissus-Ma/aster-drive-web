@@ -7,6 +7,7 @@ import { ResourceRow } from './resource-row';
 export interface FileListProps {
   items: ResourceResponse[];
   onOpen: (resource: ResourceResponse) => void;
+  onShare?: (resource: ResourceResponse) => void;
   onToggle: (resourceId: string) => void;
   selectedIds: Set<string>;
 }
@@ -14,6 +15,7 @@ export interface FileListProps {
 export function FileList({
   items,
   onOpen,
+  onShare,
   onToggle,
   selectedIds,
 }: FileListProps): JSX.Element {
@@ -61,6 +63,7 @@ export function FileList({
             <ResourceRow
               key={item.id}
               onOpen={onOpen}
+              onShare={onShare}
               onToggle={onToggle}
               resource={item}
               selected={selectedIds.has(item.id)}

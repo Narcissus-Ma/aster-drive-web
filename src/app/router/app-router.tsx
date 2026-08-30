@@ -11,11 +11,17 @@ import { DrivePage } from '../../pages/drive-page/drive-page';
 import { LoginPage } from '../../pages/login-page/login-page';
 import { TrashPage } from '../../features/trash/components/trash-page';
 import { SystemViewPage } from '../../features/system-views/components/system-view-page';
+import { SharedWithMePage } from '../../features/sharing/components/shared-with-me-page';
 import type { SystemViewKind } from '../../features/system-views/system-views';
 
 const DocumentEditorPage = lazy(() =>
   import('../../features/document-editor/components/document-editor-page').then(
     ({ DocumentEditorPage: component }) => ({ default: component }),
+  ),
+);
+const PublicSharePage = lazy(() =>
+  import('../../features/public-share/components/public-share-page').then(
+    ({ PublicSharePage: component }) => ({ default: component }),
   ),
 );
 
@@ -77,6 +83,14 @@ function ProtectedDocumentEditorPage(): JSX.Element {
   );
 }
 
+function ProtectedSharedWithMePage(): JSX.Element {
+  return (
+    <ProtectedPage>
+      <SharedWithMePage />
+    </ProtectedPage>
+  );
+}
+
 const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
   { path: '/', element: <ProtectedDrivePage /> },
@@ -86,8 +100,11 @@ const router = createBrowserRouter([
     element: <ProtectedSystemViewPage view="favorites" />,
   },
   { path: '/recent', element: <ProtectedSystemViewPage view="recent" /> },
+  { path: '/shared', element: <ProtectedSharedWithMePage /> },
   { path: '/trash', element: <ProtectedTrashPage /> },
   { path: '/documents/:resourceId', element: <ProtectedDocumentEditorPage /> },
+  { path: '/public/share/:token', element: <PublicSharePage /> },
+  { path: '/share/:token', element: <PublicSharePage /> },
   { path: '*', element: <Navigate to="/" replace /> },
 ]);
 

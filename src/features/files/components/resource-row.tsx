@@ -4,8 +4,10 @@ import type { ResourceResponse } from '../../../shared/api/generated/openapi';
 
 export interface ResourceRowProps {
   favorite?: boolean;
+  metaLabel?: string;
   onFavoriteToggle?: (resourceId: string, isFavorite: boolean) => void;
   onOpen: (resource: ResourceResponse) => void;
+  onShare?: (resource: ResourceResponse) => void;
   onToggle: (resourceId: string) => void;
   resource: ResourceResponse;
   selected: boolean;
@@ -21,8 +23,10 @@ function capability(
 
 export function ResourceRow({
   favorite = false,
+  metaLabel,
   onFavoriteToggle,
   onOpen,
+  onShare,
   onToggle,
   resource,
   selected,
@@ -48,6 +52,10 @@ export function ResourceRow({
     [favorite, onFavoriteToggle, resource.id],
   );
   const toggleMenu = useCallback(() => setMenuOpen((open) => !open), []);
+  const handleShare = useCallback(() => {
+    setMenuOpen(false);
+    onShare?.(resource);
+  }, [onShare, resource]);
 
   return (
     <li
@@ -80,6 +88,7 @@ export function ResourceRow({
       <time dateTime={resource.updated_at}>
         {new Date(resource.updated_at).toLocaleDateString('zh-CN')}
       </time>
+      {metaLabel ? <span aria-label="资源权限">{metaLabel}</span> : null}
       <button
         type="button"
         aria-label="文件操作"
@@ -118,6 +127,11 @@ export function ResourceRow({
           >
             下载
           </button>
+          {capability(resource, 'can_share') ? (
+            <button role="menuitem" type="button" onClick={handleShare}>
+              共享
+            </button>
+          ) : null}
         </div>
       ) : null}
     </li>

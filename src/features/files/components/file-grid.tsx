@@ -5,12 +5,14 @@ import type { ResourceResponse } from '../../../shared/api/generated/openapi';
 export interface FileGridProps {
   items: ResourceResponse[];
   onOpen: (resource: ResourceResponse) => void;
+  onShare?: (resource: ResourceResponse) => void;
   onToggle: (resourceId: string) => void;
   selectedIds: Set<string>;
 }
 
 interface FileGridItemProps {
   onOpen: (resource: ResourceResponse) => void;
+  onShare?: (resource: ResourceResponse) => void;
   onToggle: (resourceId: string) => void;
   resource: ResourceResponse;
   selected: boolean;
@@ -18,6 +20,7 @@ interface FileGridItemProps {
 
 const FileGridItem = memo(function FileGridItem({
   onOpen,
+  onShare,
   onToggle,
   resource,
   selected,
@@ -30,7 +33,7 @@ const FileGridItem = memo(function FileGridItem({
 
   return (
     <li data-testid={`resource-card-${resource.id}`}>
-      <label>
+      <div>
         <input
           type="checkbox"
           aria-label={`选择 ${resource.name}`}
@@ -41,7 +44,12 @@ const FileGridItem = memo(function FileGridItem({
           <span aria-hidden="true">{resource.kind === 'folder' ? '📁' : '📄'}</span>
           <span>{resource.name}</span>
         </button>
-      </label>
+        {onShare && resource.capabilities?.can_share === true ? (
+          <button type="button" onClick={() => onShare(resource)}>
+            共享
+          </button>
+        ) : null}
+      </div>
     </li>
   );
 });
@@ -49,6 +57,7 @@ const FileGridItem = memo(function FileGridItem({
 export function FileGrid({
   items,
   onOpen,
+  onShare,
   onToggle,
   selectedIds,
 }: FileGridProps): JSX.Element {
@@ -58,6 +67,7 @@ export function FileGrid({
         <FileGridItem
           key={item.id}
           onOpen={onOpen}
+          onShare={onShare}
           onToggle={onToggle}
           resource={item}
           selected={selectedIds.has(item.id)}

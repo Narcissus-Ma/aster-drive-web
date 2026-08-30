@@ -21,6 +21,7 @@ import { UploadTaskPanel } from '../../upload/components/upload-task-panel';
 import { useUploadManager } from '../../upload/hooks/use-upload-manager';
 import type { UploadTask } from '../../upload/models/upload-task';
 import { PreviewDrawer } from '../../preview/components/preview-drawer';
+import { ShareDialog } from '../../sharing/components/share-dialog';
 import { useFileSelection } from '../hooks/use-file-selection';
 import { useFileViewState } from '../hooks/use-file-view-state';
 import {
@@ -98,6 +99,7 @@ export function FileWorkspace(): JSX.Element {
     null,
   );
   const [previewResource, setPreviewResource] = useState<ResourceResponse | null>(null);
+  const [shareResource, setShareResource] = useState<ResourceResponse | null>(null);
   const operation = useFileOperation();
   const refetch = childrenQuery.refetch;
 
@@ -227,6 +229,11 @@ export function FileWorkspace(): JSX.Element {
     void refetch();
   }, [refetch]);
 
+  const handleShare = useCallback((resource: ResourceResponse) => {
+    if (resource.capabilities?.can_share !== true) return;
+    setShareResource(resource);
+  }, []);
+
   const handleFilesSelected = useCallback(
     (files: File[]) => {
       void enqueueFiles(files);
@@ -320,6 +327,7 @@ export function FileWorkspace(): JSX.Element {
             <FileList
               items={childrenQuery.items}
               onOpen={handleOpen}
+              onShare={handleShare}
               onToggle={toggleSelection}
               selectedIds={selectedIds}
             />
@@ -327,6 +335,7 @@ export function FileWorkspace(): JSX.Element {
             <FileGrid
               items={childrenQuery.items}
               onOpen={handleOpen}
+              onShare={handleShare}
               onToggle={toggleSelection}
               selectedIds={selectedIds}
             />
@@ -349,6 +358,11 @@ export function FileWorkspace(): JSX.Element {
           resource={previewResource}
         />
       ) : null}
+      <ShareDialog
+        open={shareResource !== null}
+        resource={shareResource}
+        onClose={() => setShareResource(null)}
+      />
       <NameConflictDialog
         onCancel={() => setConflictTaskId(null)}
         onSubmit={handleConflictSubmit}

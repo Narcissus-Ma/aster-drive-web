@@ -1,5 +1,5 @@
 {
-  "release_version": "api-v0.7.0",
-  "artifact_url": "https://github.com/Narcissus-Ma/aster-drive-api/releases/download/api-v0.7.0/openapi.json",
-  "sha256": "db0da23a9c0d44553ee591756b43f209a9588c613683a743a2253853b9adbb09"
+  "release_version": "api-v0.8.0",
+  "artifact_url": "https://github.com/Narcissus-Ma/aster-drive-api/releases/download/api-v0.8.0/openapi.json",
+  "sha256": "9445ee6bdfaf713f2007bbedf8c681e3510020016a2c161effb26fd885950320"
 }

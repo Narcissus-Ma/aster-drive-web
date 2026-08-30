@@ -2,9 +2,9 @@
 
 export interface ErrorResponse {
   code: string;
-  fields?: Record<string, unknown> | null;
   message: string;
   request_id: string;
+  fields?: Record<string, unknown> | null;
 }
 
 export interface LoginRequest {
@@ -17,19 +17,19 @@ export interface MessageResponse {
 }
 
 export interface ResourceCapabilities {
-  can_accept_children?: boolean;
-  can_download?: boolean;
   can_edit_content?: boolean;
-  can_move?: boolean;
   can_rename?: boolean;
-  can_share?: boolean;
+  can_move?: boolean;
   can_trash?: boolean;
+  can_share?: boolean;
+  can_download?: boolean;
+  can_accept_children?: boolean;
 }
 
 export interface ResourceCreateRequest {
-  declared_mime?: string | null;
-  name: string;
   parent_id: string;
+  name: string;
+  declared_mime?: string | null;
 }
 
 export type ResourceKind = "root" | "folder" | "document" | "file";
@@ -45,31 +45,31 @@ export interface ResourceMoveRequest {
 }
 
 export interface ResourcePatchRequest {
-  name?: string | null;
   version: number;
+  name?: string | null;
 }
 
 export interface ResourceResponse {
-  capabilities?: ResourceCapabilities;
-  created_at: string;
-  created_by: string;
-  declared_mime?: string | null;
-  deleted_at?: string | null;
-  deleted_by?: string | null;
-  detected_mime?: string | null;
-  effective_role?: string;
   id: string;
+  owner_id: string;
+  created_by: string;
+  parent_id: string | null;
   kind: ResourceKind;
+  state: ResourceState;
   name: string;
   name_key: string;
-  object_key?: string | null;
-  owner_id: string;
-  parent_id: string | null;
-  purged_at?: string | null;
+  declared_mime?: string | null;
+  detected_mime?: string | null;
   size_bytes?: number | null;
-  state: ResourceState;
-  updated_at: string;
+  object_key?: string | null;
   version: number;
+  deleted_by?: string | null;
+  deleted_at?: string | null;
+  purged_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  effective_role?: string;
+  capabilities?: ResourceCapabilities;
 }
 
 export type ResourceState = "active" | "upload_pending" | "copy_pending" | "trash" | "purge" | "purge_pending";
@@ -80,52 +80,52 @@ export interface ResourceVersionRequest {
 
 export interface TokenResponse {
   access_token: string;
-  expires_in: number;
   token_type?: string;
+  expires_in: number;
 }
 
 export interface UploadSessionCompleteRequest {
-  detected_mime?: string | null;
   etag?: string | null;
-  name?: string | null;
   size_bytes?: number | null;
+  detected_mime?: string | null;
+  name?: string | null;
 }
 
 export interface UploadSessionCreateRequest {
-  client_upload_id: string;
-  declared_mime?: string | null;
-  name: string;
   parent_id: string;
+  client_upload_id: string;
+  name: string;
   size_bytes?: number | null;
+  declared_mime?: string | null;
 }
 
 export interface UploadSessionResponse {
-  client_upload_id: string;
-  created_at: string;
-  declared_mime?: string | null;
-  detected_mime?: string | null;
-  expected_etag?: string | null;
-  expected_size?: number | null;
-  expires_at: string;
-  final_object_key?: string | null;
   id: string;
-  name: string;
+  user_id: string;
   parent_id: string;
   resource_id?: string | null;
-  status: UploadSessionStatus;
+  client_upload_id: string;
+  name: string;
+  declared_mime?: string | null;
+  detected_mime?: string | null;
+  expected_size?: number | null;
+  expected_etag?: string | null;
   temp_object_key: string;
-  updated_at: string;
+  final_object_key?: string | null;
+  status: UploadSessionStatus;
   upload_url?: string | null;
   upload_url_expires_at: string;
-  user_id: string;
+  expires_at: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export type UploadSessionStatus = "pending" | "finalizing" | "completed" | "failed" | "aborted" | "expired";
 
 export interface UserResponse {
-  display_name: string;
-  email: string;
   id: string;
+  email: string;
+  display_name: string;
   status: string;
 }
 
@@ -204,6 +204,12 @@ export interface ApiPathMap {
       response: ResourceResponse;
     };
   };
+  "/api/v1/search": {
+    get: {
+      request: undefined;
+      response: ResourceListResponse;
+    };
+  };
   "/api/v1/uploads/sessions": {
     post: {
       request: UploadSessionCreateRequest;
@@ -238,6 +244,34 @@ export interface ApiPathMap {
     get: {
       request: undefined;
       response: UserResponse;
+    };
+  };
+  "/api/v1/views/favorites": {
+    get: {
+      request: undefined;
+      response: ResourceListResponse;
+    };
+  };
+  "/api/v1/views/favorites/{resource_id}": {
+    delete: {
+      request: undefined;
+      response: MessageResponse;
+    };
+    put: {
+      request: undefined;
+      response: MessageResponse;
+    };
+  };
+  "/api/v1/views/recent": {
+    get: {
+      request: undefined;
+      response: ResourceListResponse;
+    };
+  };
+  "/api/v1/views/recent/{resource_id}": {
+    post: {
+      request: undefined;
+      response: ResourceResponse;
     };
   };
   "/health/live": {

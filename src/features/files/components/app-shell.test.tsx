@@ -23,5 +23,14 @@ describe('应用工作台布局', () => {
 
     expect(screen.getByRole('button', { name: '退出登录' })).toBeInTheDocument();
     expect(screen.getByText('文件内容')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '我的收藏' })).toHaveAttribute(
+      'href',
+      '/favorites',
+    );
+    expect(screen.getByRole('link', { name: '最近使用' })).toHaveAttribute(
+      'href',
+      '/recent',
+    );
+    expect(screen.getByRole('searchbox', { name: '全局搜索' })).toBeInTheDocument();
   });
 });

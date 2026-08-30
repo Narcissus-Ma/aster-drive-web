@@ -3,6 +3,8 @@ import { useCallback, useState, type CSSProperties } from 'react';
 import type { ResourceResponse } from '../../../shared/api/generated/openapi';
 
 export interface ResourceRowProps {
+  favorite?: boolean;
+  onFavoriteToggle?: (resourceId: string, isFavorite: boolean) => void;
   onOpen: (resource: ResourceResponse) => void;
   onToggle: (resourceId: string) => void;
   resource: ResourceResponse;
@@ -18,6 +20,8 @@ function capability(
 }
 
 export function ResourceRow({
+  favorite = false,
+  onFavoriteToggle,
   onOpen,
   onToggle,
   resource,
@@ -39,6 +43,10 @@ export function ResourceRow({
     () => onToggle(resource.id),
     [onToggle, resource.id],
   );
+  const handleFavoriteToggle = useCallback(
+    () => onFavoriteToggle?.(resource.id, !favorite),
+    [favorite, onFavoriteToggle, resource.id],
+  );
   const toggleMenu = useCallback(() => setMenuOpen((open) => !open), []);
 
   return (
@@ -59,6 +67,16 @@ export function ResourceRow({
         <span aria-hidden="true">{resource.kind === 'folder' ? '📁' : '📄'}</span>
         <span>{resource.name}</span>
       </button>
+      {onFavoriteToggle ? (
+        <button
+          type="button"
+          aria-label={`${favorite ? '取消收藏' : '收藏'} ${resource.name}`}
+          aria-pressed={favorite}
+          onClick={handleFavoriteToggle}
+        >
+          {favorite ? '★' : '☆'}
+        </button>
+      ) : null}
       <time dateTime={resource.updated_at}>
         {new Date(resource.updated_at).toLocaleDateString('zh-CN')}
       </time>

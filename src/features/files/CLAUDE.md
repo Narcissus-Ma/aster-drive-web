@@ -44,7 +44,7 @@ src/features/files/
 ## 已实现功能
 
 - React Router `/drive/:folderId?` 工作区路由和认证守卫。
-- children/detail API 请求、固定 `api-v0.3.0` OpenAPI Client。
+- children/detail API 请求、固定 `api-v0.5.0` OpenAPI Client。
 - 列表/宫格、目录树、面包屑、筛选排序、多选、空/错/加载状态。
 - 基于后端 capabilities 的重命名、移动、回收站和下载菜单禁用状态。
 - 上传拖拽/文件选择、任务队列、进度、取消、续签和名称冲突恢复入口。
@@ -54,7 +54,7 @@ src/features/files/
 
 - **P0**：新建文件夹、下载 URL、重命名、移动、回收站实际 mutation API。
 - **P0**：根目录 ID 由后端 current-user DTO 返回；当前可通过 `VITE_ROOT_RESOURCE_ID` 配置无参数 `/drive` 路由。
-- **P1**：与我共享、最近、收藏和回收站视图的后端 Views API。
+- **P1**：与我共享视图的后端 Views API；收藏与最近使用已迁移到独立系统视图模块。
 - **P1**：重型预览器、拖拽排序和移动端布局。
 
 ## 与旧组件映射

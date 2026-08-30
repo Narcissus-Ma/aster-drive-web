@@ -9,6 +9,8 @@ import { AppShell } from '../layouts/app-shell';
 import { DrivePage } from '../../pages/drive-page/drive-page';
 import { LoginPage } from '../../pages/login-page/login-page';
 import { TrashPage } from '../../features/trash/components/trash-page';
+import { SystemViewPage } from '../../features/system-views/components/system-view-page';
+import type { SystemViewKind } from '../../features/system-views/system-views';
 
 interface ProtectedPageProps {
   children: JSX.Element;
@@ -52,10 +54,23 @@ function ProtectedTrashPage(): JSX.Element {
   );
 }
 
+function ProtectedSystemViewPage({ view }: { view: SystemViewKind }): JSX.Element {
+  return (
+    <ProtectedPage>
+      <SystemViewPage view={view} />
+    </ProtectedPage>
+  );
+}
+
 const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
   { path: '/', element: <ProtectedDrivePage /> },
   { path: '/drive/:folderId?', element: <ProtectedDrivePage /> },
+  {
+    path: '/favorites',
+    element: <ProtectedSystemViewPage view="favorites" />,
+  },
+  { path: '/recent', element: <ProtectedSystemViewPage view="recent" /> },
   { path: '/trash', element: <ProtectedTrashPage /> },
   { path: '*', element: <Navigate to="/" replace /> },
 ]);

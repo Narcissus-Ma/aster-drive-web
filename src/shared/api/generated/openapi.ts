@@ -74,6 +74,10 @@ export interface ResourceResponse {
 
 export type ResourceState = "active" | "upload_pending" | "copy_pending" | "trash" | "purge" | "purge_pending";
 
+export interface ResourceVersionRequest {
+  version: number;
+}
+
 export interface TokenResponse {
   access_token: string;
   expires_in: number;
@@ -156,6 +160,12 @@ export interface ApiPathMap {
       response: ResourceResponse;
     };
   };
+  "/api/v1/resources/trash": {
+    get: {
+      request: undefined;
+      response: ResourceListResponse;
+    };
+  };
   "/api/v1/resources/{parent_id}/children": {
     get: {
       request: undefined;
@@ -163,6 +173,10 @@ export interface ApiPathMap {
     };
   };
   "/api/v1/resources/{resource_id}": {
+    delete: {
+      request: ResourceVersionRequest;
+      response: ResourceResponse;
+    };
     get: {
       request: undefined;
       response: ResourceResponse;
@@ -175,6 +189,18 @@ export interface ApiPathMap {
   "/api/v1/resources/{resource_id}/move": {
     post: {
       request: ResourceMoveRequest;
+      response: ResourceResponse;
+    };
+  };
+  "/api/v1/resources/{resource_id}/purge": {
+    delete: {
+      request: ResourceVersionRequest;
+      response: ResourceResponse;
+    };
+  };
+  "/api/v1/resources/{resource_id}/restore": {
+    post: {
+      request: ResourceVersionRequest;
       response: ResourceResponse;
     };
   };

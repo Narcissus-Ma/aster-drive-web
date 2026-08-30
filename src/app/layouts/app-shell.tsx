@@ -24,7 +24,7 @@ export function AppShell({ children }: AppShellProps): JSX.Element {
           <Link to="/drive">我的文件</Link>
           <Link to="/drive?view=shared">与我共享</Link>
           <Link to="/drive?view=recent">最近使用</Link>
-          <Link to="/drive?view=trash">回收站</Link>
+          <Link to="/trash">回收站</Link>
         </nav>
         <div className={styles.content}>{children}</div>
       </div>

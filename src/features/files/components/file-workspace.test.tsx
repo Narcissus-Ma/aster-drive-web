@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
   MemoryRouter,
@@ -166,5 +166,68 @@ describe('文件工作区', () => {
 
     await userEvent.click(screen.getByRole('button', { name: '前进' }));
     expect(screen.getByTestId('location')).toHaveTextContent('/drive/folder-a');
+  });
+
+  it('版本冲突后刷新资源并保留重命名对话框输入', async () => {
+    const editableResource = resource({
+      capabilities: {
+        can_accept_children: true,
+        can_download: true,
+        can_edit_content: false,
+        can_move: true,
+        can_rename: true,
+        can_share: true,
+        can_trash: true,
+      },
+    });
+    const updatedResource = { ...editableResource, version: 2 };
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (init?.method === 'PATCH') {
+        return new Response(
+          JSON.stringify({
+            code: 'resource_version_conflict',
+            fields: { current_version: 2 },
+            message: '资源版本已过期',
+            request_id: 'request-a',
+          }),
+          { status: 409, headers: { 'Content-Type': 'application/json' } },
+        );
+      }
+      if (url.endsWith('/folder-a') && init?.method === 'GET') {
+        return new Response(JSON.stringify(updatedResource), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      return new Response(
+        JSON.stringify({ items: [updatedResource], next_cursor: null }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      );
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    renderWorkspace();
+
+    await userEvent.click(
+      await screen.findByRole('checkbox', { name: '选择 项目资料' }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: '更多操作' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: '重命名' }));
+    const input = screen.getByRole('textbox', { name: '新名称' });
+    await userEvent.clear(input);
+    await userEvent.type(input, '冲突后的名称');
+    await userEvent.click(screen.getByRole('button', { name: '保存名称' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent('资源已被其他操作更新');
+    });
+    expect(screen.getByRole('textbox', { name: '新名称' })).toHaveValue('冲突后的名称');
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/v1/resources/folder-a',
+      expect.objectContaining({ method: 'GET' }),
+    );
   });
 });

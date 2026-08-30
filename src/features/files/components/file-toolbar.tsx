@@ -7,6 +7,9 @@ export interface FileToolbarProps {
   onClearSelection: () => void;
   onCreateFolder: () => void;
   onRefresh: () => void;
+  onMove?: () => void;
+  onRename?: () => void;
+  onTrash?: () => void;
   onViewModeChange: (mode: FileViewMode) => void;
   selectedCount: number;
   selectedResource: ResourceResponse | null;
@@ -23,7 +26,10 @@ function can(
 export function FileToolbar({
   onClearSelection,
   onCreateFolder,
+  onMove,
   onRefresh,
+  onRename,
+  onTrash,
   onViewModeChange,
   selectedCount,
   selectedResource,
@@ -63,6 +69,11 @@ export function FileToolbar({
             role="menuitem"
             type="button"
             aria-disabled={!can(selectedResource, 'can_rename')}
+            disabled={!can(selectedResource, 'can_rename')}
+            onClick={() => {
+              if (can(selectedResource, 'can_rename')) onRename?.();
+              setMenuOpen(false);
+            }}
           >
             重命名
           </button>
@@ -70,6 +81,11 @@ export function FileToolbar({
             role="menuitem"
             type="button"
             aria-disabled={!can(selectedResource, 'can_move')}
+            disabled={!can(selectedResource, 'can_move')}
+            onClick={() => {
+              if (can(selectedResource, 'can_move')) onMove?.();
+              setMenuOpen(false);
+            }}
           >
             移动到
           </button>
@@ -77,6 +93,11 @@ export function FileToolbar({
             role="menuitem"
             type="button"
             aria-disabled={!can(selectedResource, 'can_trash')}
+            disabled={!can(selectedResource, 'can_trash')}
+            onClick={() => {
+              if (can(selectedResource, 'can_trash')) onTrash?.();
+              setMenuOpen(false);
+            }}
           >
             移入回收站
           </button>
@@ -84,6 +105,7 @@ export function FileToolbar({
             role="menuitem"
             type="button"
             aria-disabled={!can(selectedResource, 'can_download')}
+            disabled={!can(selectedResource, 'can_download')}
           >
             下载
           </button>

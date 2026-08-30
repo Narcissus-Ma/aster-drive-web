@@ -5,6 +5,16 @@ import type {
   ResourceKind,
   ResourceResponse,
 } from '../../../shared/api/generated/openapi';
+import { DeleteConfirmDialog } from '../../file-operations/components/delete-confirm-dialog';
+import {
+  MovePickerDialog,
+  type MoveFolderOption,
+} from '../../file-operations/components/move-picker-dialog';
+import { RenameDialog } from '../../file-operations/components/rename-dialog';
+import {
+  useFileOperation,
+  type FileOperationKind,
+} from '../../file-operations/hooks/use-file-operation';
 import { NameConflictDialog } from '../../upload/components/name-conflict-dialog';
 import { UploadDropZone } from '../../upload/components/upload-drop-zone';
 import { UploadTaskPanel } from '../../upload/components/upload-task-panel';
@@ -82,6 +92,11 @@ export function FileWorkspace(): JSX.Element {
   const viewMode = useFileViewState((state) => state.viewMode);
   const setViewMode = useFileViewState((state) => state.setViewMode);
   const [conflictTaskId, setConflictTaskId] = useState<string | null>(null);
+  const [operationKind, setOperationKind] = useState<FileOperationKind | null>(null);
+  const [operationResource, setOperationResource] = useState<ResourceResponse | null>(
+    null,
+  );
+  const operation = useFileOperation();
   const refetch = childrenQuery.refetch;
 
   useEffect(() => {
@@ -113,6 +128,90 @@ export function FileWorkspace(): JSX.Element {
   const handleCreateFolder = useCallback(() => {
     // 创建接口在后续任务接入，当前先保留工作台入口和可测试的交互边界。
   }, []);
+
+  const openOperation = useCallback(
+    (kind: FileOperationKind) => {
+      if (!selectedResource) return;
+      operation.reset();
+      setOperationResource(selectedResource);
+      setOperationKind(kind);
+    },
+    [operation, selectedResource],
+  );
+
+  const activeOperationResource = useMemo(
+    () =>
+      operationResource
+        ? (childrenQuery.items.find((item) => item.id === operationResource.id) ??
+          operationResource)
+        : null,
+    [childrenQuery.items, operationResource],
+  );
+
+  const closeOperation = useCallback(() => {
+    setOperationKind(null);
+    setOperationResource(null);
+    operation.reset();
+  }, [operation]);
+
+  const handleRename = useCallback(
+    async (name: string) => {
+      if (!activeOperationResource) return;
+      try {
+        await operation.rename(activeOperationResource, name);
+        clearSelection();
+        closeOperation();
+      } catch {
+        // 错误由统一 mutation hook 映射并展示在对话框中。
+      }
+    },
+    [activeOperationResource, clearSelection, closeOperation, operation],
+  );
+
+  const handleMove = useCallback(
+    async (targetParentId: string) => {
+      if (!activeOperationResource) return;
+      try {
+        await operation.move(activeOperationResource, targetParentId);
+        clearSelection();
+        closeOperation();
+      } catch {
+        // 错误由统一 mutation hook 映射并展示在对话框中。
+      }
+    },
+    [activeOperationResource, clearSelection, closeOperation, operation],
+  );
+
+  const handleTrash = useCallback(async () => {
+    if (!activeOperationResource) return;
+    try {
+      await operation.trash(activeOperationResource);
+      clearSelection();
+      closeOperation();
+    } catch {
+      // 共享结构根等权限错误保留在确认对话框中。
+    }
+  }, [activeOperationResource, clearSelection, closeOperation, operation]);
+
+  const moveFolders = useMemo<MoveFolderOption[]>(() => {
+    const folders: MoveFolderOption[] = childrenQuery.items
+      .filter((item) => item.kind === 'folder' || item.kind === 'root')
+      .map((item) => ({
+        id: item.id,
+        kind: item.kind as MoveFolderOption['kind'],
+        name: item.name,
+        parentId: item.parent_id,
+      }));
+    if (ROOT_RESOURCE_ID && !folders.some((folder) => folder.id === ROOT_RESOURCE_ID)) {
+      folders.unshift({
+        id: ROOT_RESOURCE_ID,
+        kind: 'root',
+        name: '我的文件',
+        parentId: null,
+      });
+    }
+    return folders;
+  }, [childrenQuery.items]);
 
   const handleRefresh = useCallback(() => {
     void refetch();
@@ -163,7 +262,10 @@ export function FileWorkspace(): JSX.Element {
             <FileToolbar
               onClearSelection={clearSelection}
               onCreateFolder={handleCreateFolder}
+              onMove={() => openOperation('move')}
               onRefresh={handleRefresh}
+              onRename={() => openOperation('rename')}
+              onTrash={() => openOperation('trash')}
               onViewModeChange={setViewMode}
               selectedCount={selectedIds.size}
               selectedResource={selectedResource}
@@ -234,6 +336,29 @@ export function FileWorkspace(): JSX.Element {
         onCancel={() => setConflictTaskId(null)}
         onSubmit={handleConflictSubmit}
         task={selectedConflictTask}
+      />
+      <RenameDialog
+        errorMessage={operationKind === 'rename' ? operation.errorMessage : null}
+        isSubmitting={operationKind === 'rename' && operation.isPending}
+        onCancel={closeOperation}
+        onSubmit={handleRename}
+        resource={operationKind === 'rename' ? activeOperationResource : null}
+      />
+      <MovePickerDialog
+        errorMessage={operationKind === 'move' ? operation.errorMessage : null}
+        folders={moveFolders}
+        isSubmitting={operationKind === 'move' && operation.isPending}
+        onCancel={closeOperation}
+        onSubmit={handleMove}
+        resource={operationKind === 'move' ? activeOperationResource : null}
+      />
+      <DeleteConfirmDialog
+        errorMessage={operationKind === 'trash' ? operation.errorMessage : null}
+        isSubmitting={operationKind === 'trash' && operation.isPending}
+        mode="trash"
+        onCancel={closeOperation}
+        onConfirm={handleTrash}
+        resource={operationKind === 'trash' ? activeOperationResource : null}
       />
     </div>
   );

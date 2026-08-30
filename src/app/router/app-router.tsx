@@ -8,8 +8,13 @@ import {
 import { AppShell } from '../layouts/app-shell';
 import { DrivePage } from '../../pages/drive-page/drive-page';
 import { LoginPage } from '../../pages/login-page/login-page';
+import { TrashPage } from '../../features/trash/components/trash-page';
 
-function ProtectedDrivePage(): JSX.Element {
+interface ProtectedPageProps {
+  children: JSX.Element;
+}
+
+function ProtectedPage({ children }: ProtectedPageProps): JSX.Element {
   const { status } = useAuthSession();
 
   if (status === 'checking') {
@@ -28,10 +33,22 @@ function ProtectedDrivePage(): JSX.Element {
     return <Navigate to="/login" replace />;
   }
 
+  return <AppShell>{children}</AppShell>;
+}
+
+function ProtectedDrivePage(): JSX.Element {
   return (
-    <AppShell>
+    <ProtectedPage>
       <DrivePage />
-    </AppShell>
+    </ProtectedPage>
+  );
+}
+
+function ProtectedTrashPage(): JSX.Element {
+  return (
+    <ProtectedPage>
+      <TrashPage />
+    </ProtectedPage>
   );
 }
 
@@ -39,6 +56,7 @@ const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
   { path: '/', element: <ProtectedDrivePage /> },
   { path: '/drive/:folderId?', element: <ProtectedDrivePage /> },
+  { path: '/trash', element: <ProtectedTrashPage /> },
   { path: '*', element: <Navigate to="/" replace /> },
 ]);
 

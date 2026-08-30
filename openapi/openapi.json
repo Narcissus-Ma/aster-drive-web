@@ -1631,7 +1631,15 @@
   },
   "info": {
     "title": "Aster Drive API",
-    "version": "0.1.0"
+    "version": "1.0.0-rc.1",
+    "x-error-codes": {
+      "document_revision_conflict": 409,
+      "invalid_credentials": 401,
+      "name_conflict": 409,
+      "public_share_not_found": 404,
+      "resource_trashed": 410,
+      "validation_error": 422
+    }
   },
   "openapi": "3.1.0",
   "paths": {

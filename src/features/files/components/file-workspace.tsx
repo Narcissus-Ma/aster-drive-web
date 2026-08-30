@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import type {
@@ -42,6 +42,10 @@ import { ResourceFilterBar, type ResourceFilterValues } from './resource-filter-
 const ROOT_RESOURCE_ID = import.meta.env.VITE_ROOT_RESOURCE_ID ?? '';
 const resourceKinds: ResourceKind[] = ['root', 'folder', 'document', 'file'];
 
+interface FileWorkspaceLocationState {
+  openResourceId?: string;
+}
+
 function parseFilters(searchParams: URLSearchParams): ResourceFilterValues {
   const kindValue = searchParams.get('kind') as ResourceKind | null;
   return {
@@ -67,6 +71,9 @@ export function FileWorkspace(): JSX.Element {
   const { folderId } = useParams<{ folderId?: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const locationState = location.state as FileWorkspaceLocationState | null;
+  const pendingOpenResourceId = locationState?.openResourceId;
+  const handledOpenResourceId = useRef<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const parentId = folderId ?? ROOT_RESOURCE_ID;
   const filterValues = useMemo(() => parseFilters(searchParams), [searchParams]);
@@ -143,6 +150,37 @@ export function FileWorkspace(): JSX.Element {
     },
     [navigate],
   );
+
+  useEffect(() => {
+    if (
+      !pendingOpenResourceId ||
+      childrenQuery.isLoading ||
+      childrenQuery.isError ||
+      handledOpenResourceId.current === pendingOpenResourceId
+    ) {
+      return;
+    }
+    const target = childrenQuery.items.find(
+      (item) => item.id === pendingOpenResourceId,
+    );
+    if (!target) return;
+
+    handledOpenResourceId.current = pendingOpenResourceId;
+    navigate(`${location.pathname}${location.search}`, {
+      replace: true,
+      state: null,
+    });
+    handleOpen(target);
+  }, [
+    childrenQuery.isError,
+    childrenQuery.isLoading,
+    childrenQuery.items,
+    handleOpen,
+    location.pathname,
+    location.search,
+    navigate,
+    pendingOpenResourceId,
+  ]);
 
   const handleCreateFolder = useCallback(() => {
     // 创建接口在后续任务接入，当前先保留工作台入口和可测试的交互边界。

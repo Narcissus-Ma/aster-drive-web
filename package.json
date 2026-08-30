@@ -13,6 +13,8 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "e2e:up": "docker compose -f compose.e2e.yaml up -d --build",
+    "e2e:down": "docker compose -f compose.e2e.yaml down",
     "api:pin": "node scripts/pin-api-release.mjs",
     "api:generate": "node scripts/generate-api-client.mjs",
     "api:check": "node scripts/check-api-client.mjs"

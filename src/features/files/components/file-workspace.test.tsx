@@ -241,6 +241,50 @@ describe('文件工作区', () => {
     expect(screen.getByTestId('location')).toHaveTextContent('/documents/document-a');
   });
 
+  it('消费共享列表传入的待打开资源状态', async () => {
+    const document = resource({
+      id: 'document-a',
+      kind: 'document',
+      name: '共享文档',
+      name_key: '共享文档',
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify({ items: [document], next_cursor: null }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+      ),
+    );
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter
+          initialEntries={[
+            {
+              pathname: '/drive/root-a',
+              state: { openResourceId: 'document-a' },
+            },
+          ]}
+        >
+          <Routes>
+            <Route path="/drive/:folderId" element={<FileWorkspace />} />
+          </Routes>
+          <LocationProbe />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('location')).toHaveTextContent('/documents/document-a');
+    });
+  });
+
   it('版本冲突后刷新资源并保留重命名对话框输入', async () => {
     const editableResource = resource({
       capabilities: {

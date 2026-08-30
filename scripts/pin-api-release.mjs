@@ -81,8 +81,8 @@ async function main() {
   const options = parseArguments(process.argv.slice(2));
   const release = options.release;
 
-  if (!release || !/^api-v\d+\.\d+\.\d+$/.test(release)) {
-    throw new Error('请提供形如 api-v0.1.0 的 --release 参数');
+  if (!release || !/^api-v\d+\.\d+\.\d+(?:-rc\.\d+)?$/.test(release)) {
+    throw new Error('请提供形如 api-v1.0.0 或 api-v1.0.0-rc.1 的 --release 参数');
   }
 
   const artifactUrl = releaseArtifactUrl(release);

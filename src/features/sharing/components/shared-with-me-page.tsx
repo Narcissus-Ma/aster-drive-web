@@ -22,6 +22,12 @@ export function SharedWithMePage(): JSX.Element {
         navigate(`/drive/${encodeURIComponent(resource.id)}`);
         return;
       }
+      if (resource.kind === 'document') {
+        navigate(`/documents/${encodeURIComponent(resource.id)}`, {
+          state: { resourceName: resource.name },
+        });
+        return;
+      }
       const parentPath = resource.parent_id
         ? `/drive/${encodeURIComponent(resource.parent_id)}`
         : '/drive';

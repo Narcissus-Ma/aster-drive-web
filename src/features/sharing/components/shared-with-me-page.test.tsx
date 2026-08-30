@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
 import { SharedWithMePage } from './shared-with-me-page';
@@ -45,6 +46,11 @@ vi.mock('../hooks/use-sharing', () => ({
   })),
 }));
 
+function LocationProbe() {
+  const location = useLocation();
+  return <output data-testid="location">{location.pathname}</output>;
+}
+
 describe('与我共享页面', () => {
   it('展示服务器投影的共享资源和权限', () => {
     const queryClient = new QueryClient();
@@ -59,5 +65,21 @@ describe('与我共享页面', () => {
     expect(screen.getByRole('heading', { name: '与我共享' })).toBeInTheDocument();
     expect(screen.getByText('共享文档')).toBeInTheDocument();
     expect(screen.getByText('查看')).toBeInTheDocument();
+  });
+
+  it('打开共享文档时直接进入编辑器路由', async () => {
+    const queryClient = new QueryClient();
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <SharedWithMePage />
+          <LocationProbe />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: /共享文档/ }));
+
+    expect(screen.getByTestId('location')).toHaveTextContent('/documents/resource-a');
   });
 });

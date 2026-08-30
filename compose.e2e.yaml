@@ -1,0 +1,120 @@
+name: aster-drive-e2e
+
+services:
+  postgres:
+    image: postgres:17.6-bookworm
+    environment:
+      POSTGRES_DB: ${E2E_DATABASE_NAME:-aster_drive_e2e}
+      POSTGRES_USER: ${E2E_DATABASE_USER:-aster_drive_e2e}
+      POSTGRES_PASSWORD: ${E2E_DATABASE_PASSWORD:-aster-drive-e2e}
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    ports:
+      - '127.0.0.1:15432:5432'
+    volumes:
+      - aster-drive-e2e-postgres:/var/lib/postgresql/data
+
+  minio:
+    image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${E2E_MINIO_ACCESS_KEY:-aster-drive-e2e}
+      MINIO_ROOT_PASSWORD: ${E2E_MINIO_SECRET_KEY:-aster-drive-e2e-secret}
+    healthcheck:
+      test: ['CMD', 'curl', '--fail', 'http://localhost:9000/minio/health/live']
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - aster-drive-e2e-minio:/data
+
+  minio-gateway:
+    image: nginx:1.28.0-alpine3.21
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      FRONTEND_ORIGIN: ${E2E_WEB_ORIGIN:-http://127.0.0.1:4173}
+      NGINX_ENVSUBST_FILTER: FRONTEND_ORIGIN
+    volumes:
+      - ../aster-drive-api/deploy/minio/nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
+    ports:
+      - '127.0.0.1:19000:9000'
+
+  minio-init:
+    image: quay.io/minio/mc:RELEASE.2025-04-16T18-13-26Z
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - >-
+        set -eu;
+        mc alias set local http://minio:9000 "$${E2E_MINIO_ACCESS_KEY:-aster-drive-e2e}" "$${E2E_MINIO_SECRET_KEY:-aster-drive-e2e-secret}";
+        mc mb --ignore-existing "local/$${E2E_BUCKET_NAME:-aster-drive-e2e}";
+        mc anonymous set none "local/$${E2E_BUCKET_NAME:-aster-drive-e2e}";
+    environment:
+      E2E_BUCKET_NAME: ${E2E_BUCKET_NAME:-aster-drive-e2e}
+      E2E_MINIO_ACCESS_KEY: ${E2E_MINIO_ACCESS_KEY:-aster-drive-e2e}
+      E2E_MINIO_SECRET_KEY: ${E2E_MINIO_SECRET_KEY:-aster-drive-e2e-secret}
+    restart: 'no'
+
+  e2e-init:
+    build:
+      context: ../aster-drive-api
+      dockerfile: Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    environment: &api-environment
+      DATABASE_URL: postgresql+asyncpg://${E2E_DATABASE_USER:-aster_drive_e2e}:${E2E_DATABASE_PASSWORD:-aster-drive-e2e}@postgres:5432/${E2E_DATABASE_NAME:-aster_drive_e2e}
+      DATABASE_SCHEMA: ${E2E_SCHEMA:-e2e_mvp}
+      MINIO_ENDPOINT: minio:9000
+      MINIO_PUBLIC_ENDPOINT: localhost:19000
+      MINIO_ACCESS_KEY: ${E2E_MINIO_ACCESS_KEY:-aster-drive-e2e}
+      MINIO_SECRET_KEY: ${E2E_MINIO_SECRET_KEY:-aster-drive-e2e-secret}
+      MINIO_BUCKET_NAME: ${E2E_BUCKET_NAME:-aster-drive-e2e}
+      CORS_ORIGINS: '["${E2E_WEB_ORIGIN:-http://127.0.0.1:4173}"]'
+      AUTH_SIGNING_SECRET: task23-e2e-auth-signing-secret
+      AUTH_COOKIE_SECURE: 'false'
+      E2E_OWNER_EMAIL: owner@example.com
+      E2E_OWNER_PASSWORD: owner-password
+      E2E_EDITOR_EMAIL: editor@example.com
+      E2E_EDITOR_PASSWORD: editor-password
+      E2E_VIEWER_EMAIL: viewer@example.com
+      E2E_VIEWER_PASSWORD: viewer-password
+      E2E_SCHEMA: ${E2E_SCHEMA:-e2e_mvp}
+      E2E_BUCKET_PREFIX: ${E2E_BUCKET_PREFIX:-e2e/mvp}
+    command: ['sh', '-c', 'alembic upgrade head && python -m scripts.seed_e2e']
+    restart: 'no'
+
+  api:
+    build:
+      context: ../aster-drive-api
+      dockerfile: Dockerfile
+    depends_on:
+      e2e-init:
+        condition: service_completed_successfully
+    environment: *api-environment
+    ports:
+      - '127.0.0.1:18000:8000'
+    command: ['uvicorn', 'app.main:app', '--host', '0.0.0.0', '--port', '8000']
+
+  worker:
+    build:
+      context: ../aster-drive-api
+      dockerfile: Dockerfile
+    depends_on:
+      e2e-init:
+        condition: service_completed_successfully
+    environment: *api-environment
+    command: ['python', '-m', 'scripts.run_maintenance_worker']
+
+volumes:
+  aster-drive-e2e-postgres:
+  aster-drive-e2e-minio:

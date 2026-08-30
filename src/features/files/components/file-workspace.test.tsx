@@ -168,6 +168,51 @@ describe('文件工作区', () => {
     expect(screen.getByTestId('location')).toHaveTextContent('/drive/folder-a');
   });
 
+  it('点击文件后打开预览抽屉', async () => {
+    const image = resource({
+      id: 'file-a',
+      kind: 'file',
+      name: '照片.png',
+      name_key: '照片.png',
+      declared_mime: 'image/png',
+      object_key: 'objects/photo',
+    });
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/content/file-a/preview')) {
+        return new Response(
+          JSON.stringify({
+            resource_id: 'file-a',
+            filename: '照片.png',
+            declared_mime: 'image/png',
+            detected_mime: 'image/png',
+            mime_type: 'image/png',
+            size_bytes: 128,
+            etag: 'etag-a',
+            disposition: 'inline',
+            previewable: true,
+            url: 'https://objects.example/photo.png?signature=test',
+            expires_at: '2026-08-30T12:05:00Z',
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        );
+      }
+      return new Response(JSON.stringify({ items: [image], next_cursor: null }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    renderWorkspace();
+
+    await userEvent.click(await screen.findByRole('button', { name: /照片.png/ }));
+
+    expect(await screen.findByRole('img', { name: '照片.png' })).toHaveAttribute(
+      'src',
+      expect.stringContaining('photo.png'),
+    );
+  });
+
   it('版本冲突后刷新资源并保留重命名对话框输入', async () => {
     const editableResource = resource({
       capabilities: {

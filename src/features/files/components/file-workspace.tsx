@@ -20,6 +20,7 @@ import { UploadDropZone } from '../../upload/components/upload-drop-zone';
 import { UploadTaskPanel } from '../../upload/components/upload-task-panel';
 import { useUploadManager } from '../../upload/hooks/use-upload-manager';
 import type { UploadTask } from '../../upload/models/upload-task';
+import { PreviewDrawer } from '../../preview/components/preview-drawer';
 import { useFileSelection } from '../hooks/use-file-selection';
 import { useFileViewState } from '../hooks/use-file-view-state';
 import {
@@ -96,6 +97,7 @@ export function FileWorkspace(): JSX.Element {
   const [operationResource, setOperationResource] = useState<ResourceResponse | null>(
     null,
   );
+  const [previewResource, setPreviewResource] = useState<ResourceResponse | null>(null);
   const operation = useFileOperation();
   const refetch = childrenQuery.refetch;
 
@@ -120,7 +122,9 @@ export function FileWorkspace(): JSX.Element {
     (resource: ResourceResponse) => {
       if (resource.kind === 'folder' || resource.kind === 'root') {
         navigate(`/drive/${encodeURIComponent(resource.id)}`);
+        return;
       }
+      setPreviewResource(resource);
     },
     [navigate],
   );
@@ -332,6 +336,13 @@ export function FileWorkspace(): JSX.Element {
           </button>
         ) : null}
       </section>
+      {previewResource ? (
+        <PreviewDrawer
+          onClose={() => setPreviewResource(null)}
+          open
+          resource={previewResource}
+        />
+      ) : null}
       <NameConflictDialog
         onCancel={() => setConflictTaskId(null)}
         onSubmit={handleConflictSubmit}

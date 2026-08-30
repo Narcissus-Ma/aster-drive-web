@@ -1,10 +1,24 @@
 // 此文件由 scripts/generate-api-client.mjs 生成，请勿手动修改。
 
+export interface ContentAccessResponse {
+  declared_mime: string | null;
+  detected_mime: string;
+  disposition: "inline" | "attachment";
+  etag: string;
+  expires_at: string;
+  filename: string;
+  mime_type: string;
+  previewable: boolean;
+  resource_id: string;
+  size_bytes: number;
+  url: string;
+}
+
 export interface ErrorResponse {
   code: string;
+  fields?: Record<string, unknown> | null;
   message: string;
   request_id: string;
-  fields?: Record<string, unknown> | null;
 }
 
 export interface LoginRequest {
@@ -17,19 +31,19 @@ export interface MessageResponse {
 }
 
 export interface ResourceCapabilities {
-  can_edit_content?: boolean;
-  can_rename?: boolean;
-  can_move?: boolean;
-  can_trash?: boolean;
-  can_share?: boolean;
-  can_download?: boolean;
   can_accept_children?: boolean;
+  can_download?: boolean;
+  can_edit_content?: boolean;
+  can_move?: boolean;
+  can_rename?: boolean;
+  can_share?: boolean;
+  can_trash?: boolean;
 }
 
 export interface ResourceCreateRequest {
-  parent_id: string;
-  name: string;
   declared_mime?: string | null;
+  name: string;
+  parent_id: string;
 }
 
 export type ResourceKind = "root" | "folder" | "document" | "file";
@@ -45,31 +59,31 @@ export interface ResourceMoveRequest {
 }
 
 export interface ResourcePatchRequest {
-  version: number;
   name?: string | null;
+  version: number;
 }
 
 export interface ResourceResponse {
-  id: string;
-  owner_id: string;
+  capabilities?: ResourceCapabilities;
+  created_at: string;
   created_by: string;
-  parent_id: string | null;
+  declared_mime?: string | null;
+  deleted_at?: string | null;
+  deleted_by?: string | null;
+  detected_mime?: string | null;
+  effective_role?: string;
+  id: string;
   kind: ResourceKind;
-  state: ResourceState;
   name: string;
   name_key: string;
-  declared_mime?: string | null;
-  detected_mime?: string | null;
-  size_bytes?: number | null;
   object_key?: string | null;
-  version: number;
-  deleted_by?: string | null;
-  deleted_at?: string | null;
+  owner_id: string;
+  parent_id: string | null;
   purged_at?: string | null;
-  created_at: string;
+  size_bytes?: number | null;
+  state: ResourceState;
   updated_at: string;
-  effective_role?: string;
-  capabilities?: ResourceCapabilities;
+  version: number;
 }
 
 export type ResourceState = "active" | "upload_pending" | "copy_pending" | "trash" | "purge" | "purge_pending";
@@ -80,52 +94,52 @@ export interface ResourceVersionRequest {
 
 export interface TokenResponse {
   access_token: string;
-  token_type?: string;
   expires_in: number;
+  token_type?: string;
 }
 
 export interface UploadSessionCompleteRequest {
-  etag?: string | null;
-  size_bytes?: number | null;
   detected_mime?: string | null;
+  etag?: string | null;
   name?: string | null;
+  size_bytes?: number | null;
 }
 
 export interface UploadSessionCreateRequest {
-  parent_id: string;
   client_upload_id: string;
-  name: string;
-  size_bytes?: number | null;
   declared_mime?: string | null;
+  name: string;
+  parent_id: string;
+  size_bytes?: number | null;
 }
 
 export interface UploadSessionResponse {
-  id: string;
-  user_id: string;
-  parent_id: string;
-  resource_id?: string | null;
   client_upload_id: string;
-  name: string;
+  created_at: string;
   declared_mime?: string | null;
   detected_mime?: string | null;
-  expected_size?: number | null;
   expected_etag?: string | null;
-  temp_object_key: string;
+  expected_size?: number | null;
+  expires_at: string;
   final_object_key?: string | null;
+  id: string;
+  name: string;
+  parent_id: string;
+  resource_id?: string | null;
   status: UploadSessionStatus;
+  temp_object_key: string;
+  updated_at: string;
   upload_url?: string | null;
   upload_url_expires_at: string;
-  expires_at: string;
-  created_at: string;
-  updated_at: string;
+  user_id: string;
 }
 
 export type UploadSessionStatus = "pending" | "finalizing" | "completed" | "failed" | "aborted" | "expired";
 
 export interface UserResponse {
-  id: string;
-  email: string;
   display_name: string;
+  email: string;
+  id: string;
   status: string;
 }
 
@@ -146,6 +160,24 @@ export interface ApiPathMap {
     post: {
       request: undefined;
       response: TokenResponse;
+    };
+  };
+  "/api/v1/content/{resource_id}/download": {
+    get: {
+      request: undefined;
+      response: ContentAccessResponse;
+    };
+  };
+  "/api/v1/content/{resource_id}/preview": {
+    get: {
+      request: undefined;
+      response: ContentAccessResponse;
+    };
+  };
+  "/api/v1/content/{resource_id}/stream": {
+    get: {
+      request: undefined;
+      response: unknown;
     };
   };
   "/api/v1/resources/documents": {

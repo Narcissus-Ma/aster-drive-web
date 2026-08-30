@@ -21,6 +21,9 @@ import { UploadTaskPanel } from '../../upload/components/upload-task-panel';
 import { useUploadManager } from '../../upload/hooks/use-upload-manager';
 import type { UploadTask } from '../../upload/models/upload-task';
 import { PreviewDrawer } from '../../preview/components/preview-drawer';
+import { CopyDialog, type CopySubmitValues } from '../../copy/components/copy-dialog';
+import { CopyProgress } from '../../copy/components/copy-progress';
+import { useCopyOperation } from '../../copy/hooks/use-copy-operation';
 import { ShareDialog } from '../../sharing/components/share-dialog';
 import { useFileSelection } from '../hooks/use-file-selection';
 import { useFileViewState } from '../hooks/use-file-view-state';
@@ -100,7 +103,11 @@ export function FileWorkspace(): JSX.Element {
   );
   const [previewResource, setPreviewResource] = useState<ResourceResponse | null>(null);
   const [shareResource, setShareResource] = useState<ResourceResponse | null>(null);
+  const [copySourceResource, setCopySourceResource] = useState<ResourceResponse | null>(
+    null,
+  );
   const operation = useFileOperation();
+  const copyOperation = useCopyOperation();
   const refetch = childrenQuery.refetch;
 
   useEffect(() => {
@@ -234,6 +241,54 @@ export function FileWorkspace(): JSX.Element {
     setShareResource(resource);
   }, []);
 
+  const handleCopy = useCallback(
+    (resource: ResourceResponse) => {
+      if (resource.capabilities?.can_download !== true) return;
+      copyOperation.reset();
+      setCopySourceResource(resource);
+    },
+    [copyOperation],
+  );
+
+  const activeCopyResource = useMemo(
+    () =>
+      copySourceResource
+        ? (childrenQuery.items.find((item) => item.id === copySourceResource.id) ??
+          copySourceResource)
+        : null,
+    [childrenQuery.items, copySourceResource],
+  );
+
+  const closeCopyDialog = useCallback(() => {
+    setCopySourceResource(null);
+  }, []);
+
+  const handleCopySubmit = useCallback(
+    (values: CopySubmitValues) => {
+      if (!activeCopyResource) return;
+      void copyOperation
+        .start(activeCopyResource, values)
+        .then(() => {
+          clearSelection();
+          setCopySourceResource(null);
+        })
+        .catch(() => undefined);
+    },
+    [activeCopyResource, clearSelection, copyOperation, setCopySourceResource],
+  );
+
+  const handleOpenCopiedResource = useCallback(
+    (resourceId: string) => {
+      const copiedResource = copyOperation.operation?.resource;
+      if (copiedResource?.id === resourceId) {
+        handleOpen(copiedResource);
+        return;
+      }
+      navigate(`/drive/${encodeURIComponent(resourceId)}`);
+    },
+    [copyOperation.operation?.resource, handleOpen, navigate],
+  );
+
   const handleFilesSelected = useCallback(
     (files: File[]) => {
       void enqueueFiles(files);
@@ -326,6 +381,7 @@ export function FileWorkspace(): JSX.Element {
           viewMode === 'list' ? (
             <FileList
               items={childrenQuery.items}
+              onCopy={handleCopy}
               onOpen={handleOpen}
               onShare={handleShare}
               onToggle={toggleSelection}
@@ -334,6 +390,7 @@ export function FileWorkspace(): JSX.Element {
           ) : (
             <FileGrid
               items={childrenQuery.items}
+              onCopy={handleCopy}
               onOpen={handleOpen}
               onShare={handleShare}
               onToggle={toggleSelection}
@@ -362,6 +419,19 @@ export function FileWorkspace(): JSX.Element {
         open={shareResource !== null}
         resource={shareResource}
         onClose={() => setShareResource(null)}
+      />
+      <CopyProgress
+        onDismiss={copyOperation.reset}
+        onOpenResource={handleOpenCopiedResource}
+        operation={copyOperation.operation}
+      />
+      <CopyDialog
+        errorMessage={copyOperation.errorMessage}
+        folders={moveFolders}
+        isSubmitting={copyOperation.isPending}
+        onCancel={closeCopyDialog}
+        onSubmit={handleCopySubmit}
+        resource={activeCopyResource}
       />
       <NameConflictDialog
         onCancel={() => setConflictTaskId(null)}

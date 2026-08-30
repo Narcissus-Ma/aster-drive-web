@@ -5,6 +5,7 @@ import type { ResourceResponse } from '../../../shared/api/generated/openapi';
 export interface ResourceRowProps {
   favorite?: boolean;
   metaLabel?: string;
+  onCopy?: (resource: ResourceResponse) => void;
   onFavoriteToggle?: (resourceId: string, isFavorite: boolean) => void;
   onOpen: (resource: ResourceResponse) => void;
   onShare?: (resource: ResourceResponse) => void;
@@ -24,6 +25,7 @@ function capability(
 export function ResourceRow({
   favorite = false,
   metaLabel,
+  onCopy,
   onFavoriteToggle,
   onOpen,
   onShare,
@@ -56,6 +58,10 @@ export function ResourceRow({
     setMenuOpen(false);
     onShare?.(resource);
   }, [onShare, resource]);
+  const handleCopy = useCallback(() => {
+    setMenuOpen(false);
+    onCopy?.(resource);
+  }, [onCopy, resource]);
 
   return (
     <li
@@ -127,6 +133,11 @@ export function ResourceRow({
           >
             下载
           </button>
+          {onCopy && capability(resource, 'can_download') ? (
+            <button role="menuitem" type="button" onClick={handleCopy}>
+              复制到
+            </button>
+          ) : null}
           {capability(resource, 'can_share') ? (
             <button role="menuitem" type="button" onClick={handleShare}>
               共享

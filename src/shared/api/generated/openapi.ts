@@ -14,6 +14,31 @@ export interface ContentAccessResponse {
   url: string;
 }
 
+export interface CopyOperationResponse {
+  created_at?: string | null;
+  error_code?: string | null;
+  id?: string | null;
+  kind: ResourceKind;
+  last_error?: string | null;
+  name: string;
+  operation_id?: string | null;
+  progress?: number;
+  resource?: ResourceResponse | null;
+  source_resource_id: string;
+  status: CopyOperationStatus;
+  target_parent_id: string;
+  target_resource_id?: string | null;
+  updated_at?: string | null;
+}
+
+export type CopyOperationStatus = "pending" | "running" | "succeeded" | "failed" | "canceled" | "cancel_requested";
+
+export interface CopyRequest {
+  name?: string | null;
+  target_parent_id: string;
+  version?: number | null;
+}
+
 export interface DocumentContentRequest {
   base_revision?: number | null;
   content: Record<string, unknown>;
@@ -288,6 +313,12 @@ export interface ApiPathMap {
       response: unknown;
     };
   };
+  "/api/v1/copies/{operation_id}": {
+    get: {
+      request: undefined;
+      response: CopyOperationResponse;
+    };
+  };
   "/api/v1/documents/{resource_id}": {
     get: {
       request: undefined;
@@ -340,6 +371,12 @@ export interface ApiPathMap {
     patch: {
       request: ResourcePatchRequest;
       response: ResourceResponse;
+    };
+  };
+  "/api/v1/resources/{resource_id}/copy": {
+    post: {
+      request: CopyRequest;
+      response: CopyOperationResponse;
     };
   };
   "/api/v1/resources/{resource_id}/grants": {

@@ -6,6 +6,7 @@ import { ResourceRow } from './resource-row';
 
 export interface FileListProps {
   items: ResourceResponse[];
+  onCopy?: (resource: ResourceResponse) => void;
   onOpen: (resource: ResourceResponse) => void;
   onShare?: (resource: ResourceResponse) => void;
   onToggle: (resourceId: string) => void;
@@ -14,6 +15,7 @@ export interface FileListProps {
 
 export function FileList({
   items,
+  onCopy,
   onOpen,
   onShare,
   onToggle,
@@ -62,6 +64,7 @@ export function FileList({
           return (
             <ResourceRow
               key={item.id}
+              onCopy={onCopy}
               onOpen={onOpen}
               onShare={onShare}
               onToggle={onToggle}

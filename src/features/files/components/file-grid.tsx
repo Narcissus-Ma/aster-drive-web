@@ -4,6 +4,7 @@ import type { ResourceResponse } from '../../../shared/api/generated/openapi';
 
 export interface FileGridProps {
   items: ResourceResponse[];
+  onCopy?: (resource: ResourceResponse) => void;
   onOpen: (resource: ResourceResponse) => void;
   onShare?: (resource: ResourceResponse) => void;
   onToggle: (resourceId: string) => void;
@@ -11,6 +12,7 @@ export interface FileGridProps {
 }
 
 interface FileGridItemProps {
+  onCopy?: (resource: ResourceResponse) => void;
   onOpen: (resource: ResourceResponse) => void;
   onShare?: (resource: ResourceResponse) => void;
   onToggle: (resourceId: string) => void;
@@ -19,6 +21,7 @@ interface FileGridItemProps {
 }
 
 const FileGridItem = memo(function FileGridItem({
+  onCopy,
   onOpen,
   onShare,
   onToggle,
@@ -49,6 +52,11 @@ const FileGridItem = memo(function FileGridItem({
             共享
           </button>
         ) : null}
+        {onCopy && resource.capabilities?.can_download === true ? (
+          <button type="button" onClick={() => onCopy(resource)}>
+            复制到
+          </button>
+        ) : null}
       </div>
     </li>
   );
@@ -56,6 +64,7 @@ const FileGridItem = memo(function FileGridItem({
 
 export function FileGrid({
   items,
+  onCopy,
   onOpen,
   onShare,
   onToggle,
@@ -66,6 +75,7 @@ export function FileGrid({
       {items.map((item) => (
         <FileGridItem
           key={item.id}
+          onCopy={onCopy}
           onOpen={onOpen}
           onShare={onShare}
           onToggle={onToggle}

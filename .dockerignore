@@ -1,0 +1,13 @@
+.git
+.gitignore
+.dockerignore
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+.yarn/cache/
+.yarn/install-state.gz
+.env
+.env.*
+*.log

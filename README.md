@@ -11,6 +11,19 @@ yarn type-check
 yarn lint
 yarn format:check
 yarn test
+yarn test:docker
 ```
+
+## Docker 部署
+
+前端可独立构建为 Nginx 镜像运行。生产构建只需要公开的 API 地址和根资源 ID：
+
+```bash
+export VITE_API_BASE_URL=https://api.example.com
+export VITE_ROOT_RESOURCE_ID=00000000-0000-0000-0000-000000000000
+docker compose up -d --build
+```
+
+详细配置、SPA 回退、缓存、安全响应头和回滚方式见 [`docs/deployment.md`](docs/deployment.md)。
 
 项目按 `app/pages -> features -> components/shared` 组织，后续功能按业务能力就近放入 `src/features/`。

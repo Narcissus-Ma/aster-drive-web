@@ -35,8 +35,24 @@ jobs:
         run: yarn type-check
       - name: Unit tests
         run: yarn test
+      - name: Verify Docker configuration
+        run: yarn test:docker
       - name: Build static site
         run: yarn build
+      - name: Build production Web image
+        run: >-
+          docker build --pull --tag aster-drive-web:ci
+          --build-arg VITE_API_BASE_URL=https://ci.invalid/api
+          --build-arg VITE_ROOT_RESOURCE_ID=ci-root
+          .
+      - name: Scan production Web image
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: aster-drive-web:ci
+          format: table
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: '1'
       - name: Install Playwright browser
         run: yarn playwright install --with-deps chromium
       - name: Run E2E tests

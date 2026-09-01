@@ -18,6 +18,7 @@ export default defineConfig({
       '**/cypress/**',
       '**/.{idea,git,cache,output,temp}/**',
       'e2e/**',
+      'tests/docker-config.test.mjs',
     ],
     globals: true,
     setupFiles: './src/test/setup.ts',

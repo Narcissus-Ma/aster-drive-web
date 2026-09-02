@@ -1,5 +1,7 @@
 .workspaceActions {
   display: flex;
+  display: -webkit-box;
+  display: -ms-flexbox;
   -webkit-box-align: start;
   -ms-flex-align: start;
   align-items: flex-start;
@@ -7,6 +9,11 @@
   -ms-flex-pack: justify;
   justify-content: space-between;
   gap: 12px;
+  -webkit-box-flex: 1;
+  -ms-flex: 1 1 620px;
+  flex: 1 1 620px;
+  min-width: 0;
+  max-width: 100%;
   -ms-flex-wrap: wrap;
   flex-wrap: wrap;
 }
@@ -89,10 +96,16 @@
   justify-content: space-between;
   gap: 18px;
   min-width: 0;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
 }
 
 .heading {
+  -webkit-box-flex: 1;
+  -ms-flex: 1 1 280px;
+  flex: 1 1 280px;
   min-width: 0;
+  max-width: 100%;
 }
 
 .eyebrow {

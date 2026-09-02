@@ -1176,6 +1176,10 @@
       },
       "ShareLinkResponse": {
         "properties": {
+          "active": {
+            "title": "Active",
+            "type": "boolean"
+          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",
@@ -1241,7 +1245,8 @@
           "resource_id",
           "created_by",
           "role",
-          "created_at"
+          "created_at",
+          "active"
         ],
         "title": "ShareLinkResponse",
         "type": "object"

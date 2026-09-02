@@ -31,6 +31,21 @@ function renderPage(resourceId = 'resource-a') {
   );
 }
 
+function renderDeepLinkPage(resourceId = 'resource-a') {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter initialEntries={[`/documents/${resourceId}`]}>
+        <Routes>
+          <Route path="/documents/:resourceId" element={<DocumentEditorPage />} />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>,
+  );
+}
+
 describe('文档编辑器页面', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -61,6 +76,44 @@ describe('文档编辑器页面', () => {
     expect(editor).toHaveAttribute('contenteditable', 'false');
     expect(screen.getByRole('button', { name: '加粗' })).toBeDisabled();
     expect(screen.getByText('只读')).toBeInTheDocument();
+  });
+
+  it('直接深链打开文档时使用资源详情名称而不是资源 ID', async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith('/api/v1/resources/resource-a')) {
+        return new Response(JSON.stringify({ id: 'resource-a', name: '项目笔记' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      return new Response(
+        JSON.stringify({
+          resource_id: 'resource-a',
+          content: documentContent,
+          revision: 1,
+          content_hash: 'hash-a',
+          effective_role: 'viewer',
+          capabilities: { can_download: true, can_edit_content: false },
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      );
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderDeepLinkPage();
+
+    expect(
+      await screen.findByRole('heading', { name: '项目笔记' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: 'resource-a' }),
+    ).not.toBeInTheDocument();
+    expect(
+      fetchMock.mock.calls.some(([input]) =>
+        String(input).endsWith('/api/v1/resources/resource-a'),
+      ),
+    ).toBe(true);
   });
 
   it('editor 修改内容后触发自动保存并显示已保存', async () => {

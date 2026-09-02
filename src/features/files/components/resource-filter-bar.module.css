@@ -2,6 +2,9 @@
   display: flex;
   display: -webkit-box;
   display: -ms-flexbox;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
   -ms-flex-wrap: wrap;
   flex-wrap: wrap;
   align-items: flex-end;
@@ -23,7 +26,11 @@
   -ms-flex-direction: column;
   flex-direction: column;
   gap: 5px;
-  min-width: 132px;
+  -webkit-box-flex: 1;
+  -ms-flex: 1 1 132px;
+  flex: 1 1 132px;
+  min-width: min(132px, 100%);
+  max-width: 100%;
   color: #6c7893;
   font-size: 11px;
   font-weight: 600;
@@ -32,6 +39,8 @@
 .filter input,
 .filter select {
   min-width: 0;
+  width: 100%;
+  max-width: 100%;
   min-height: 34px;
   padding: 0 8px;
   border: 1px solid #d7deeb;

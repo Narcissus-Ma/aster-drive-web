@@ -15,6 +15,7 @@ import {
 } from '../models/document-content';
 import { useDocumentAutosave } from '../hooks/use-document-autosave';
 import { useDocumentEditor } from '../hooks/use-document-editor';
+import { useResourceDetail } from '../../files/hooks/use-resource-detail';
 import { EditorToolbar } from './editor-toolbar';
 import styles from './document-editor-page.module.css';
 import { RevisionConflictDialog } from './revision-conflict-dialog';
@@ -38,8 +39,12 @@ export function DocumentEditorPage({
   const navigate = useNavigate();
   const resourceId = resourceIdProp ?? params.resourceId ?? null;
   const locationState = location.state as DocumentLocationState | null;
+  const resourceNameFromContext = resourceNameProp ?? locationState?.resourceName;
+  const resourceDetail = useResourceDetail(
+    resourceNameFromContext ? undefined : (resourceId ?? undefined),
+  );
   const resourceName =
-    resourceNameProp ?? locationState?.resourceName ?? resourceId ?? '未命名文档';
+    resourceNameFromContext ?? resourceDetail.data?.name ?? resourceId ?? '未命名文档';
   const editorState = useDocumentEditor(resourceId);
   const [isReloading, setIsReloading] = useState(false);
   const [copyNotice, setCopyNotice] = useState<string | null>(null);

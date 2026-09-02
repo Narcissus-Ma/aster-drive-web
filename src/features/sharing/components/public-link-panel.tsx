@@ -36,11 +36,18 @@ export function PublicLinkPanel({
   onRevoke,
 }: PublicLinkPanelProps): JSX.Element {
   const [createdLink, setCreatedLink] = useState<ShareLinkResponse | null>(null);
+  const [revokedLinkId, setRevokedLinkId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle');
   const activeLink = useMemo(
-    () => createdLink ?? links.find((link) => !link.revoked_at && link.token),
-    [createdLink, links],
+    () =>
+      createdLink ??
+      links.find(
+        (link) =>
+          link.id !== revokedLinkId &&
+          (link.active || (!link.revoked_at && Boolean(link.token || link.url))),
+      ),
+    [createdLink, links, revokedLinkId],
   );
   const activeUrl = activeLink ? linkUrl(activeLink) : '';
 
@@ -49,6 +56,7 @@ export function PublicLinkPanel({
     setIsCreating(true);
     try {
       setCreatedLink(await onCreate());
+      setRevokedLinkId(null);
       setCopyState('idle');
     } finally {
       setIsCreating(false);
@@ -69,6 +77,7 @@ export function PublicLinkPanel({
   const handleRevoke = useCallback(() => {
     if (!activeLink) return;
     setCreatedLink(null);
+    setRevokedLinkId(activeLink.id);
     onRevoke?.(activeLink.id);
   }, [activeLink, onRevoke]);
 
@@ -76,6 +85,21 @@ export function PublicLinkPanel({
     <section aria-labelledby="share-public-link-title">
       <h3 id="share-public-link-title">公开链接</h3>
       {!activeLink ? <p className={styles.muted}>尚未生成公开链接</p> : null}
+      {activeLink && !activeUrl ? (
+        <>
+          <p className={styles.muted} role="status">
+            已生成公开链接
+          </p>
+          <p className={styles.muted}>
+            公开地址仅在生成时返回，重新生成可获得新的访问地址
+          </p>
+          {canShare ? (
+            <button type="button" onClick={handleRevoke}>
+              撤销公开链接
+            </button>
+          ) : null}
+        </>
+      ) : null}
       {activeLink && activeUrl ? (
         <div className={styles.publicLinkRow}>
           <input aria-label="公开链接地址" readOnly value={activeUrl} />
@@ -95,7 +119,11 @@ export function PublicLinkPanel({
       ) : null}
       {canShare ? (
         <button type="button" disabled={isCreating} onClick={() => void handleCreate()}>
-          {isCreating ? '正在生成…' : '生成公开链接'}
+          {isCreating
+            ? '正在生成…'
+            : activeLink && !activeUrl
+              ? '重新生成公开链接'
+              : '生成公开链接'}
         </button>
       ) : null}
     </section>

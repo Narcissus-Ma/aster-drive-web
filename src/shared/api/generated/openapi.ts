@@ -203,6 +203,7 @@ export interface ShareLinkListResponse {
 }
 
 export interface ShareLinkResponse {
+  active: boolean;
   created_at: string;
   created_by: string;
   id: string;

@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
@@ -8,6 +11,19 @@ import { FileGrid } from './file-grid';
 import { FileList } from './file-list';
 import { FileToolbar } from './file-toolbar';
 import { ResourceFilterBar } from './resource-filter-bar';
+
+const workspaceStyles = readFileSync(
+  join(process.cwd(), 'src/features/files/components/file-workspace.module.css'),
+  'utf8',
+);
+const toolbarStyles = readFileSync(
+  join(process.cwd(), 'src/features/files/components/file-toolbar.module.css'),
+  'utf8',
+);
+const filterStyles = readFileSync(
+  join(process.cwd(), 'src/features/files/components/resource-filter-bar.module.css'),
+  'utf8',
+);
 
 const resource = {
   id: 'resource-a',
@@ -26,6 +42,15 @@ const resource = {
 };
 
 describe('文件工作区布局', () => {
+  it('在有限主栏宽度下允许头部和操作区收缩换行', () => {
+    expect(workspaceStyles).toMatch(
+      /\.header\s*\{[\s\S]*-ms-flex-wrap:\s*wrap;[\s\S]*flex-wrap:\s*wrap;/,
+    );
+    expect(workspaceStyles).toMatch(/\.workspaceActions\s*\{[\s\S]*min-width:\s*0;/);
+    expect(toolbarStyles).toMatch(/\.toolbar\s*\{[\s\S]*min-width:\s*0;/);
+    expect(filterStyles).toMatch(/\.filter\s*\{[\s\S]*min-width:\s*0;/);
+  });
+
   it('为文件区结构组件提供可组合的布局样式钩子', () => {
     render(
       <MemoryRouter>

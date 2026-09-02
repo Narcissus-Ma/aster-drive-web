@@ -77,4 +77,42 @@ describe('资源行收藏交互', () => {
     await userEvent.click(screen.getByRole('button', { name: '文件操作' }));
     expect(screen.queryByRole('menuitem', { name: '共享' })).not.toBeInTheDocument();
   });
+
+  it('为资源操作菜单触发对应回调', async () => {
+    const handlers = {
+      onDownload: vi.fn(),
+      onMove: vi.fn(),
+      onRename: vi.fn(),
+      onTrash: vi.fn(),
+    };
+    const resource = {
+      ...rowResource,
+      capabilities: {
+        can_download: true,
+        can_move: true,
+        can_rename: true,
+        can_trash: true,
+      },
+    };
+    render(
+      <ResourceRow
+        {...handlers}
+        onOpen={vi.fn()}
+        onToggle={vi.fn()}
+        resource={resource}
+        selected={false}
+      />,
+    );
+
+    for (const [label, handler] of [
+      ['重命名', handlers.onRename],
+      ['移动到', handlers.onMove],
+      ['移入回收站', handlers.onTrash],
+      ['下载', handlers.onDownload],
+    ] as const) {
+      await userEvent.click(screen.getByRole('button', { name: '文件操作' }));
+      await userEvent.click(screen.getByRole('menuitem', { name: label }));
+      expect(handler).toHaveBeenCalledWith(resource);
+    }
+  });
 });

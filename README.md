@@ -16,11 +16,11 @@ yarn test:docker
 
 ## Docker 部署
 
-前端可独立构建为 Nginx 镜像运行。生产构建只需要公开的 API 地址和根资源 ID：
+前端可独立构建为 Nginx 镜像运行。生产构建只需要公开的 API 地址；根资源 ID 可选，未提供时前端会通过 API 搜索当前用户的根目录：
 
 ```bash
 export VITE_API_BASE_URL=https://api.example.com
-export VITE_ROOT_RESOURCE_ID=00000000-0000-0000-0000-000000000000
+# 可选：export VITE_ROOT_RESOURCE_ID=<root-resource-id>
 docker compose up -d --build
 ```
 

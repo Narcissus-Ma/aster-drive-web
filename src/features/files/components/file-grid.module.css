@@ -1,0 +1,82 @@
+.grid {
+  display: grid;
+  display: -ms-grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid #e1e7f0;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 8px 22px rgb(23 32 51 / 5%);
+}
+
+.card:hover {
+  border-color: #b7c2dc;
+  box-shadow: 0 12px 28px rgb(23 32 51 / 9%);
+}
+
+.cardBody {
+  display: flex;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nameButton {
+  display: flex;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 4px 0;
+  border: 0;
+  color: #172033;
+  background: transparent;
+  text-align: left;
+}
+
+.nameButton span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.actionButton {
+  min-height: 30px;
+  padding: 0 8px;
+  border: 1px solid #d7deeb;
+  border-radius: 7px;
+  color: #536dfe;
+  background: #ffffff;
+  font-size: 12px;
+}
+
+.actionButton:hover,
+.actionButton:focus-visible {
+  border-color: #536dfe;
+  background: #eef1ff;
+}

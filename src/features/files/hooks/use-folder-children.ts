@@ -4,7 +4,7 @@ import {
   type InfiniteData,
 } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { ApiClientError } from '../../../shared/api/api-client';
 import type {
@@ -51,7 +51,9 @@ function mergeResourcePages(
 }
 
 export interface ResourceRecoveryOptions {
+  currentPath?: string;
   error: unknown;
+  fallbackPath?: string;
   navigate?: (to: string, options?: { replace?: boolean }) => void;
   parentId: string;
   queryClient: ReturnType<typeof useQueryClient>;
@@ -59,7 +61,9 @@ export interface ResourceRecoveryOptions {
 }
 
 export async function recoverResourceAccessError({
+  currentPath,
   error,
+  fallbackPath,
   navigate,
   parentId,
   queryClient,
@@ -89,13 +93,20 @@ export async function recoverResourceAccessError({
   if (error.status === 404) {
     queryClient.removeQueries({
       queryKey: resourceQueryKeys.detail(resourceId ?? parentId),
+      type: 'inactive',
     });
-    queryClient.removeQueries({ queryKey: ['resources', 'children'] });
-    const fallbackPath =
-      resourceId && resourceId !== parentId
+    queryClient.removeQueries({
+      queryKey: ['resources', 'children'],
+      type: 'inactive',
+    });
+    const targetPath =
+      fallbackPath ??
+      (resourceId && resourceId !== parentId
         ? `/drive/${encodeURIComponent(parentId)}`
-        : '/drive';
-    navigate?.(fallbackPath, { replace: true });
+        : '/drive');
+    if (targetPath !== currentPath) {
+      navigate?.(targetPath, { replace: true });
+    }
   }
 
   return undefined;
@@ -104,6 +115,7 @@ export async function recoverResourceAccessError({
 export function useFolderChildren(query: FolderChildrenQuery) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const location = useLocation();
   const handledErrorRef = useRef<unknown>(null);
   const childrenQuery = useInfiniteQuery({
     queryKey: resourceQueryKeys.children(query),
@@ -115,6 +127,7 @@ export function useFolderChildren(query: FolderChildrenQuery) {
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined,
     enabled: query.parentId.length > 0,
+    retry: false,
   });
 
   const items = useMemo(
@@ -129,11 +142,13 @@ export function useFolderChildren(query: FolderChildrenQuery) {
     handledErrorRef.current = childrenQuery.error;
     void recoverResourceAccessError({
       error: childrenQuery.error,
+      currentPath: location.pathname,
+      fallbackPath: '/drive',
       navigate,
       parentId: query.parentId,
       queryClient,
     });
-  }, [childrenQuery.error, navigate, query.parentId, queryClient]);
+  }, [childrenQuery.error, location.pathname, navigate, query.parentId, queryClient]);
 
   const { fetchNextPage, hasNextPage, isFetchingNextPage } = childrenQuery;
   const loadMore = useCallback(async () => {

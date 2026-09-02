@@ -1,3 +1,4 @@
+import { useMutation } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
@@ -12,6 +13,7 @@ import {
 } from '../../file-operations/components/move-picker-dialog';
 import { RenameDialog } from '../../file-operations/components/rename-dialog';
 import {
+  getFileOperationErrorMessage,
   useFileOperation,
   type FileOperationKind,
 } from '../../file-operations/hooks/use-file-operation';
@@ -25,24 +27,40 @@ import { CopyDialog, type CopySubmitValues } from '../../copy/components/copy-di
 import { CopyProgress } from '../../copy/components/copy-progress';
 import { useCopyOperation } from '../../copy/hooks/use-copy-operation';
 import { ShareDialog } from '../../sharing/components/share-dialog';
+import { getDownloadAccess } from '../../preview/api/preview-api';
 import { useFileSelection } from '../hooks/use-file-selection';
 import { useFileViewState } from '../hooks/use-file-view-state';
+import { createFolder } from '../api/resource-api';
 import {
   useFolderChildren,
   type FolderChildrenQuery,
 } from '../hooks/use-folder-children';
+import { useRootResource } from '../hooks/use-root-resource';
+import { useResourceDetail } from '../hooks/use-resource-detail';
 import { DirectoryTree } from './directory-tree';
 import { FileBreadcrumb } from './file-breadcrumb';
+import { CreateFolderDialog } from './create-folder-dialog';
 import { FileGrid } from './file-grid';
 import { FileList } from './file-list';
 import { FileToolbar } from './file-toolbar';
 import styles from './file-workspace.module.css';
 import { ResourceFilterBar, type ResourceFilterValues } from './resource-filter-bar';
 
-const ROOT_RESOURCE_ID = import.meta.env.VITE_ROOT_RESOURCE_ID ?? '';
+const ZERO_ROOT_RESOURCE_ID = '00000000-0000-0000-0000-000000000000';
+
+function normalizeRootResourceId(value: string | undefined): string | null {
+  const normalized = value?.trim() ?? '';
+  if (!normalized || normalized === ZERO_ROOT_RESOURCE_ID) return null;
+  return normalized;
+}
+
+const CONFIGURED_ROOT_RESOURCE_ID = normalizeRootResourceId(
+  import.meta.env.VITE_ROOT_RESOURCE_ID,
+);
 const resourceKinds: ResourceKind[] = ['root', 'folder', 'document', 'file'];
 
 interface FileWorkspaceLocationState {
+  folderName?: string;
   openResourceId?: string;
 }
 
@@ -75,7 +93,16 @@ export function FileWorkspace(): JSX.Element {
   const pendingOpenResourceId = locationState?.openResourceId;
   const handledOpenResourceId = useRef<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
-  const parentId = folderId ?? ROOT_RESOURCE_ID;
+  const shouldResolveRoot =
+    folderId === undefined && CONFIGURED_ROOT_RESOURCE_ID === null;
+  const rootQuery = useRootResource({ enabled: shouldResolveRoot });
+  const folderDetailQuery = useResourceDetail(folderId);
+  const resolvedRootResourceId =
+    CONFIGURED_ROOT_RESOURCE_ID ?? rootQuery.data?.id ?? '';
+  const parentId = folderId ?? resolvedRootResourceId;
+  const currentFolderName = folderId
+    ? (locationState?.folderName ?? folderDetailQuery.data?.name ?? '当前目录')
+    : (rootQuery.data?.name ?? '我的文件');
   const filterValues = useMemo(() => parseFilters(searchParams), [searchParams]);
   const query = useMemo<FolderChildrenQuery>(
     () => ({
@@ -89,6 +116,20 @@ export function FileWorkspace(): JSX.Element {
     [filterValues, parentId],
   );
   const childrenQuery = useFolderChildren(query);
+  const {
+    error: createFolderError,
+    isPending: isCreatingFolder,
+    mutateAsync: submitCreateFolder,
+    reset: resetCreateFolder,
+  } = useMutation({
+    mutationFn: ({ name, parentId }: { name: string; parentId: string }) =>
+      createFolder({ name, parent_id: parentId }),
+  });
+  const isRootLoading = shouldResolveRoot && rootQuery.isLoading;
+  const rootError = shouldResolveRoot && rootQuery.isError ? rootQuery.error : null;
+  const isWorkspaceLoading = isRootLoading || childrenQuery.isLoading;
+  const workspaceError = rootError ?? childrenQuery.error;
+  const isWorkspaceError = workspaceError !== null && workspaceError !== undefined;
   const {
     cancel: cancelUpload,
     clearCompleted: clearCompletedUploads,
@@ -104,6 +145,7 @@ export function FileWorkspace(): JSX.Element {
   const viewMode = useFileViewState((state) => state.viewMode);
   const setViewMode = useFileViewState((state) => state.setViewMode);
   const [conflictTaskId, setConflictTaskId] = useState<string | null>(null);
+  const [createFolderOpen, setCreateFolderOpen] = useState(false);
   const [operationKind, setOperationKind] = useState<FileOperationKind | null>(null);
   const [operationResource, setOperationResource] = useState<ResourceResponse | null>(
     null,
@@ -113,6 +155,7 @@ export function FileWorkspace(): JSX.Element {
   const [copySourceResource, setCopySourceResource] = useState<ResourceResponse | null>(
     null,
   );
+  const [downloadError, setDownloadError] = useState<string | null>(null);
   const operation = useFileOperation();
   const copyOperation = useCopyOperation();
   const refetch = childrenQuery.refetch;
@@ -137,7 +180,9 @@ export function FileWorkspace(): JSX.Element {
   const handleOpen = useCallback(
     (resource: ResourceResponse) => {
       if (resource.kind === 'folder' || resource.kind === 'root') {
-        navigate(`/drive/${encodeURIComponent(resource.id)}`);
+        navigate(`/drive/${encodeURIComponent(resource.id)}`, {
+          state: { folderName: resource.name },
+        });
         return;
       }
       if (resource.kind === 'document') {
@@ -183,18 +228,77 @@ export function FileWorkspace(): JSX.Element {
   ]);
 
   const handleCreateFolder = useCallback(() => {
-    // 创建接口在后续任务接入，当前先保留工作台入口和可测试的交互边界。
-  }, []);
+    if (!parentId || isRootLoading || isWorkspaceError) return;
+    resetCreateFolder();
+    setCreateFolderOpen(true);
+  }, [isRootLoading, isWorkspaceError, parentId, resetCreateFolder]);
+
+  const closeCreateFolder = useCallback(() => {
+    setCreateFolderOpen(false);
+    resetCreateFolder();
+  }, [resetCreateFolder]);
+
+  const handleCreateFolderSubmit = useCallback(
+    async (name: string) => {
+      if (!parentId) return;
+      try {
+        await submitCreateFolder({ name, parentId });
+        closeCreateFolder();
+        await refetch();
+      } catch {
+        // 错误交给对话框展示，保留用户输入以便直接修正。
+      }
+    },
+    [closeCreateFolder, parentId, refetch, submitCreateFolder],
+  );
+
+  const openOperationForResource = useCallback(
+    (kind: FileOperationKind, resource: ResourceResponse) => {
+      operation.reset();
+      setOperationResource(resource);
+      setOperationKind(kind);
+    },
+    [operation],
+  );
 
   const openOperation = useCallback(
     (kind: FileOperationKind) => {
       if (!selectedResource) return;
-      operation.reset();
-      setOperationResource(selectedResource);
-      setOperationKind(kind);
+      openOperationForResource(kind, selectedResource);
     },
-    [operation, selectedResource],
+    [openOperationForResource, selectedResource],
   );
+
+  const handleResourceRename = useCallback(
+    (resource: ResourceResponse) => openOperationForResource('rename', resource),
+    [openOperationForResource],
+  );
+  const handleResourceMove = useCallback(
+    (resource: ResourceResponse) => openOperationForResource('move', resource),
+    [openOperationForResource],
+  );
+  const handleResourceTrash = useCallback(
+    (resource: ResourceResponse) => openOperationForResource('trash', resource),
+    [openOperationForResource],
+  );
+
+  const handleDownload = useCallback(async (resource: ResourceResponse) => {
+    if (resource.capabilities?.can_download !== true) return;
+    try {
+      const access = await getDownloadAccess(resource.id);
+      const anchor = document.createElement('a');
+      anchor.href = access.url;
+      anchor.download = access.filename;
+      anchor.rel = 'noreferrer';
+      anchor.target = '_blank';
+      document.body.append(anchor);
+      anchor.click();
+      anchor.remove();
+      setDownloadError(null);
+    } catch (error) {
+      setDownloadError(getFileOperationErrorMessage(error));
+    }
+  }, []);
 
   const activeOperationResource = useMemo(
     () =>
@@ -259,16 +363,19 @@ export function FileWorkspace(): JSX.Element {
         name: item.name,
         parentId: item.parent_id,
       }));
-    if (ROOT_RESOURCE_ID && !folders.some((folder) => folder.id === ROOT_RESOURCE_ID)) {
+    if (
+      resolvedRootResourceId &&
+      !folders.some((folder) => folder.id === resolvedRootResourceId)
+    ) {
       folders.unshift({
-        id: ROOT_RESOURCE_ID,
+        id: resolvedRootResourceId,
         kind: 'root',
         name: '我的文件',
         parentId: null,
       });
     }
     return folders;
-  }, [childrenQuery.items]);
+  }, [childrenQuery.items, resolvedRootResourceId]);
 
   const handleRefresh = useCallback(() => {
     void refetch();
@@ -358,24 +465,42 @@ export function FileWorkspace(): JSX.Element {
   return (
     <div
       data-testid="file-workspace"
-      className="file-workspace"
-      aria-busy={childrenQuery.isFetching}
+      className={`${styles.workspace} file-workspace`}
+      aria-busy={isWorkspaceLoading || childrenQuery.isFetching}
     >
-      <aside>
-        <DirectoryTree currentFolderId={folderId} />
+      <aside className={styles.sidebar}>
+        <DirectoryTree
+          currentFolderId={folderId}
+          currentFolderName={currentFolderName}
+        />
       </aside>
-      <section aria-labelledby="workspace-title" aria-describedby="workspace-status">
-        <FileBreadcrumb currentFolderId={folderId} />
-        <header>
-          <div>
-            <p>ASTER DRIVE</p>
-            <h1 id="workspace-title">你的文件工作台</h1>
-            <output data-testid="workspace-location">{`${location.pathname}${location.search}`}</output>
+      <section
+        className={styles.main}
+        aria-labelledby="workspace-title"
+        aria-describedby="workspace-status"
+      >
+        <FileBreadcrumb
+          currentFolderId={folderId}
+          currentFolderName={currentFolderName}
+        />
+        <header className={styles.header}>
+          <div className={styles.heading}>
+            <p className={styles.eyebrow}>ASTER DRIVE</p>
+            <h1 className={styles.title} id="workspace-title">
+              你的文件工作台
+            </h1>
+            <output className={styles.location} data-testid="workspace-location">
+              {`${location.pathname}${location.search}`}
+            </output>
           </div>
           <div className={styles.workspaceActions}>
             <FileToolbar
               onClearSelection={clearSelection}
               onCreateFolder={handleCreateFolder}
+              createFolderDisabled={!parentId || isRootLoading || isWorkspaceError}
+              onDownload={() => {
+                if (selectedResource) void handleDownload(selectedResource);
+              }}
               onMove={() => openOperation('move')}
               onRefresh={handleRefresh}
               onRename={() => openOperation('rename')}
@@ -386,16 +511,16 @@ export function FileWorkspace(): JSX.Element {
               viewMode={viewMode}
             />
             <UploadDropZone
-              disabled={parentId.length === 0}
+              disabled={parentId.length === 0 || isRootLoading || isWorkspaceError}
               onFilesSelected={handleFilesSelected}
             />
           </div>
         </header>
         <ResourceFilterBar onChange={handleFilterChange} values={filterValues} />
         <p id="workspace-status" className={styles.visuallyHidden} aria-live="polite">
-          {childrenQuery.isLoading
+          {isWorkspaceLoading
             ? '正在加载文件…'
-            : childrenQuery.isError
+            : isWorkspaceError
               ? '加载文件失败'
               : `当前目录有 ${childrenQuery.items.length} 个资源`}
         </p>
@@ -406,38 +531,50 @@ export function FileWorkspace(): JSX.Element {
           onRetry={retryUpload}
           tasks={uploadTasks}
         />
-        {childrenQuery.isLoading ? (
-          <p role="status" aria-live="polite">
+        {isWorkspaceLoading ? (
+          <p className={styles.feedback} role="status" aria-live="polite">
             正在加载文件…
           </p>
         ) : null}
-        {childrenQuery.isError ? (
-          <div role="alert" aria-live="assertive">
+        {isWorkspaceError ? (
+          <div className={styles.feedback} role="alert" aria-live="assertive">
             <p>
-              {childrenQuery.error instanceof Error
-                ? childrenQuery.error.message
+              {workspaceError instanceof Error
+                ? workspaceError.message
                 : '加载文件失败'}
             </p>
-            <button type="button" onClick={() => void refetch()}>
+            <button
+              type="button"
+              onClick={() => void (rootError ? rootQuery.refetch() : refetch())}
+            >
               重新加载
             </button>
           </div>
         ) : null}
-        {!childrenQuery.isLoading &&
-        !childrenQuery.isError &&
-        childrenQuery.items.length === 0 ? (
-          <p data-testid="file-empty-state">当前目录暂无文件</p>
+        {downloadError ? (
+          <p className={styles.feedback} role="alert" aria-live="assertive">
+            {downloadError}
+          </p>
         ) : null}
-        {!childrenQuery.isLoading &&
-        !childrenQuery.isError &&
-        childrenQuery.items.length > 0 ? (
+        {!isWorkspaceLoading &&
+        !isWorkspaceError &&
+        childrenQuery.items.length === 0 ? (
+          <p className={styles.empty} data-testid="file-empty-state">
+            当前目录暂无文件
+          </p>
+        ) : null}
+        {!isWorkspaceLoading && !isWorkspaceError && childrenQuery.items.length > 0 ? (
           viewMode === 'list' ? (
             <FileList
               items={childrenQuery.items}
               onCopy={handleCopy}
+              onDownload={handleDownload}
+              onMove={handleResourceMove}
               onOpen={handleOpen}
+              onRename={handleResourceRename}
               onShare={handleShare}
               onToggle={toggleSelection}
+              onTrash={handleResourceTrash}
               selectedIds={selectedIds}
             />
           ) : (
@@ -453,6 +590,7 @@ export function FileWorkspace(): JSX.Element {
         ) : null}
         {childrenQuery.hasNextPage ? (
           <button
+            className={styles.loadMore}
             type="button"
             onClick={() => void childrenQuery.loadMore()}
             disabled={childrenQuery.isFetchingNextPage}
@@ -491,6 +629,15 @@ export function FileWorkspace(): JSX.Element {
         onCancel={() => setConflictTaskId(null)}
         onSubmit={handleConflictSubmit}
         task={selectedConflictTask}
+      />
+      <CreateFolderDialog
+        errorMessage={
+          createFolderError ? getFileOperationErrorMessage(createFolderError) : null
+        }
+        isSubmitting={isCreatingFolder}
+        onCancel={closeCreateFolder}
+        onSubmit={handleCreateFolderSubmit}
+        open={createFolderOpen}
       />
       <RenameDialog
         errorMessage={operationKind === 'rename' ? operation.errorMessage : null}

@@ -77,6 +77,21 @@ function renderWorkspace(initialEntry = '/drive/root-a') {
   );
 }
 
+function renderRootWorkspace() {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter initialEntries={['/drive']}>
+        <Routes>
+          <Route path="/drive/:folderId?" element={<FileWorkspace />} />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>,
+  );
+}
+
 describe('文件工作区', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -104,6 +119,87 @@ describe('文件工作区', () => {
     expect(screen.getByRole('menuitem', { name: '移动到' })).toHaveAttribute(
       'aria-disabled',
       'true',
+    );
+  });
+
+  it('未配置根目录时先解析真实根目录再加载文件', async () => {
+    const root = resource({
+      id: 'root-real',
+      kind: 'root',
+      name: '我的文件',
+      name_key: '我的文件',
+      parent_id: null,
+      capabilities: { can_accept_children: true },
+    });
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/v1/search?')) {
+        return new Response(JSON.stringify({ items: [root], next_cursor: null }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      expect(url).toContain('/api/v1/resources/root-real/children');
+      return new Response(JSON.stringify({ items: [], next_cursor: null }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderRootWorkspace();
+
+    expect(await screen.findByTestId('file-empty-state')).toHaveTextContent(
+      '当前目录暂无文件',
+    );
+    expect(
+      fetchMock.mock.calls.some(([input]) =>
+        String(input).includes('/api/v1/resources/root-real/children'),
+      ),
+    ).toBe(true);
+  });
+
+  it('提交新建文件夹后刷新当前目录', async () => {
+    const createdFolder = resource({
+      id: 'folder-new',
+      name: '新资料',
+      name_key: '新资料',
+      capabilities: { can_accept_children: true },
+    });
+    let listRequestCount = 0;
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.endsWith('/api/v1/resources/folders') && init?.method === 'POST') {
+        expect(JSON.parse(String(init.body))).toEqual({
+          name: '新资料',
+          parent_id: 'root-a',
+        });
+        return new Response(JSON.stringify(createdFolder), {
+          status: 201,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      listRequestCount += 1;
+      return new Response(
+        JSON.stringify({
+          items: listRequestCount > 1 ? [createdFolder] : [],
+          next_cursor: null,
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      );
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    renderWorkspace();
+
+    await userEvent.click(await screen.findByRole('button', { name: '新建文件夹' }));
+    expect(screen.getByRole('dialog', { name: '新建文件夹' })).toBeInTheDocument();
+    await userEvent.type(screen.getByRole('textbox', { name: '文件夹名称' }), '新资料');
+    await userEvent.click(screen.getByRole('button', { name: '创建文件夹' }));
+
+    expect(await screen.findByTestId('resource-row-folder-new')).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/v1/resources/folders',
+      expect.objectContaining({ method: 'POST' }),
     );
   });
 
@@ -166,6 +262,30 @@ describe('文件工作区', () => {
 
     await userEvent.click(screen.getByRole('button', { name: '前进' }));
     expect(screen.getByTestId('location')).toHaveTextContent('/drive/folder-a');
+  });
+
+  it('使用目录资源名称渲染树和面包屑', async () => {
+    const currentFolder = resource({ name: '项目资料', name_key: '项目资料' });
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith('/api/v1/resources/folder-a')) {
+        return new Response(JSON.stringify(currentFolder), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      return new Response(JSON.stringify({ items: [], next_cursor: null }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    renderWorkspace('/drive/folder-a');
+
+    expect((await screen.findAllByText('项目资料')).length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByTestId('directory-tree')).toHaveTextContent('项目资料');
+    expect(screen.getByTestId('file-breadcrumb')).toHaveTextContent('项目资料');
+    expect(screen.queryByText('目录 folder-a')).not.toBeInTheDocument();
   });
 
   it('点击文件后打开预览抽屉', async () => {

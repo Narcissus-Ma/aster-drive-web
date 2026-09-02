@@ -3,12 +3,17 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 
 import type { ResourceResponse } from '../../../shared/api/generated/openapi';
 import { ResourceRow } from './resource-row';
+import styles from './file-list.module.css';
 
 export interface FileListProps {
   items: ResourceResponse[];
   onCopy?: (resource: ResourceResponse) => void;
+  onDownload?: (resource: ResourceResponse) => void;
+  onMove?: (resource: ResourceResponse) => void;
   onOpen: (resource: ResourceResponse) => void;
+  onRename?: (resource: ResourceResponse) => void;
   onShare?: (resource: ResourceResponse) => void;
+  onTrash?: (resource: ResourceResponse) => void;
   onToggle: (resourceId: string) => void;
   selectedIds: Set<string>;
 }
@@ -16,9 +21,13 @@ export interface FileListProps {
 export function FileList({
   items,
   onCopy,
+  onDownload,
+  onMove,
   onOpen,
+  onRename,
   onShare,
   onToggle,
+  onTrash,
   selectedIds,
 }: FileListProps): JSX.Element {
   const parentRef = useRef<HTMLDivElement>(null);
@@ -40,16 +49,9 @@ export function FileList({
     : items;
 
   return (
-    <div
-      ref={parentRef}
-      data-testid="file-list-scroll"
-      style={{
-        maxHeight: 'min(62vh, 640px)',
-        overflow: 'auto',
-        overscrollBehavior: 'contain',
-      }}
-    >
+    <div ref={parentRef} className={styles.listScroll} data-testid="file-list-scroll">
       <ul
+        className={styles.list}
         data-testid="file-list"
         aria-label="文件列表"
         style={
@@ -70,9 +72,13 @@ export function FileList({
             <ResourceRow
               key={item.id}
               onCopy={onCopy}
+              onDownload={onDownload}
+              onMove={onMove}
               onOpen={onOpen}
+              onRename={onRename}
               onShare={onShare}
               onToggle={onToggle}
+              onTrash={onTrash}
               resource={item}
               selected={selectedIds.has(item.id)}
               positionInSet={

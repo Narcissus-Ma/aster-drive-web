@@ -5,7 +5,7 @@ Web 是纯静态前端，可选择直接发布 `dist/`，也可打包为 Nginx D
 ## 构建配置
 
 - `VITE_API_BASE_URL`：API 的 HTTPS 公网地址，例如 `https://api.example.com`。
-- `VITE_ROOT_RESOURCE_ID`：默认根目录资源 ID。
+- `VITE_ROOT_RESOURCE_ID`：可选的默认根目录资源 ID；省略或使用全零占位值时，前端会通过搜索 API 解析当前用户根目录。
 - 所有变量在构建时注入，修改后必须重新构建；不要放入 access token、Cookie 或 MinIO 凭证。
 
 ## 发布步骤
@@ -25,7 +25,7 @@ Docker 镜像采用 Node 22 多阶段构建和 Nginx Alpine 运行时，容器�
 
 ```bash
 export VITE_API_BASE_URL=https://api.example.com
-export VITE_ROOT_RESOURCE_ID=00000000-0000-0000-0000-000000000000
+# 可选：export VITE_ROOT_RESOURCE_ID=<root-resource-id>
 docker compose up -d --build
 curl -fsS http://127.0.0.1:8080/
 docker compose ps
@@ -36,7 +36,6 @@ docker compose ps
 ```bash
 docker build \
   --build-arg VITE_API_BASE_URL=https://api.example.com \
-  --build-arg VITE_ROOT_RESOURCE_ID=00000000-0000-0000-0000-000000000000 \
   --tag aster-drive-web:local .
 docker run --rm --publish 8080:8080 aster-drive-web:local
 ```
@@ -53,4 +52,4 @@ API 通过 CORS 允许该 Web origin；Cookie 方案应保持同站点域名，�
 
 ## 独立回滚
 
-Web 每个 tag 同时可对应一份不可变静态 artifact 和一份 GHCR 镜像。静态部署回滚只切换 CDN/Pages artifact；容器部署回滚只切换到上一份镜像 SHA，不修改 API 数据。若 API contract 不兼容，先恢复 API 镜像，再恢复 Web artifact 或 Web 镜像。发布前运行 `yarn api:check`，确认 `openapi.lock.json` 与生成客户端匹配。
+本项目不使用 GitHub Actions 自动构建或部署；工作流仅保留手动触发入口。Web 的实际发布由外部静态托管或局域网 Docker 环境负责。回滚时切换到上一份 `dist/` 或 Web 镜像，不修改 API 数据。若 API contract 不兼容，先恢复 API 镜像，再恢复 Web artifact 或 Web 镜像。发布前运行 `yarn api:check`，确认 `openapi.lock.json` 与生成客户端匹配。

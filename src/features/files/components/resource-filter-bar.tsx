@@ -1,5 +1,6 @@
 import type { ResourceKind } from '../../../shared/api/generated/openapi';
 import type { ResourceSortBy, ResourceSortDirection } from '../api/resource-api';
+import styles from './resource-filter-bar.module.css';
 
 export interface ResourceFilterValues {
   kind?: ResourceKind;
@@ -20,6 +21,7 @@ export function ResourceFilterBar({
 }: ResourceFilterBarProps): JSX.Element {
   return (
     <form
+      className={styles.filter}
       data-testid="resource-filter-bar"
       aria-label="资源筛选"
       onSubmit={(event) => event.preventDefault()}

@@ -1,0 +1,14 @@
+.listScroll {
+  max-height: min(62vh, 640px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid #e1e7f0;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}

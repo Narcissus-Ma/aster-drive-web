@@ -1,9 +1,8 @@
 name: Web CI
 
+# 项目不使用 GitHub 自动 CI/CD，仅在需要时手动运行检查。
 on:
-  pull_request:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read

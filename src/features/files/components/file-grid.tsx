@@ -1,6 +1,7 @@
 import { memo, useCallback } from 'react';
 
 import type { ResourceResponse } from '../../../shared/api/generated/openapi';
+import styles from './file-grid.module.css';
 
 export interface FileGridProps {
   items: ResourceResponse[];
@@ -35,27 +36,39 @@ const FileGridItem = memo(function FileGridItem({
   const handleOpen = useCallback(() => onOpen(resource), [onOpen, resource]);
 
   return (
-    <li data-testid={`resource-card-${resource.id}`}>
-      <div>
+    <li className={styles.card} data-testid={`resource-card-${resource.id}`}>
+      <div className={styles.cardBody}>
         <input
           type="checkbox"
           aria-label={`选择 ${resource.name}`}
           checked={selected}
           onChange={handleToggle}
         />
-        <button type="button" onClick={handleOpen}>
+        <button className={styles.nameButton} type="button" onClick={handleOpen}>
           <span aria-hidden="true">{resource.kind === 'folder' ? '📁' : '📄'}</span>
           <span>{resource.name}</span>
         </button>
-        {onShare && resource.capabilities?.can_share === true ? (
-          <button type="button" onClick={() => onShare(resource)}>
-            共享
-          </button>
-        ) : null}
-        {onCopy && resource.capabilities?.can_download === true ? (
-          <button type="button" onClick={() => onCopy(resource)}>
-            复制到
-          </button>
+        {onShare || onCopy ? (
+          <div className={styles.actions}>
+            {onShare && resource.capabilities?.can_share === true ? (
+              <button
+                className={styles.actionButton}
+                type="button"
+                onClick={() => onShare(resource)}
+              >
+                共享
+              </button>
+            ) : null}
+            {onCopy && resource.capabilities?.can_download === true ? (
+              <button
+                className={styles.actionButton}
+                type="button"
+                onClick={() => onCopy(resource)}
+              >
+                复制到
+              </button>
+            ) : null}
+          </div>
         ) : null}
       </div>
     </li>
@@ -71,7 +84,7 @@ export function FileGrid({
   selectedIds,
 }: FileGridProps): JSX.Element {
   return (
-    <ul data-testid="file-grid" aria-label="文件宫格">
+    <ul className={styles.grid} data-testid="file-grid" aria-label="文件宫格">
       {items.map((item) => (
         <FileGridItem
           key={item.id}

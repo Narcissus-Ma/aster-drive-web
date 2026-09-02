@@ -2,10 +2,13 @@ import { useCallback, useState } from 'react';
 
 import type { ResourceResponse } from '../../../shared/api/generated/openapi';
 import type { FileViewMode } from '../store/file-view-state';
+import styles from './file-toolbar.module.css';
 
 export interface FileToolbarProps {
   onClearSelection: () => void;
   onCreateFolder: () => void;
+  createFolderDisabled?: boolean;
+  onDownload?: () => void;
   onRefresh: () => void;
   onMove?: () => void;
   onRename?: () => void;
@@ -26,6 +29,8 @@ function can(
 export function FileToolbar({
   onClearSelection,
   onCreateFolder,
+  createFolderDisabled = false,
+  onDownload,
   onMove,
   onRefresh,
   onRename,
@@ -39,8 +44,13 @@ export function FileToolbar({
   const toggleMenu = useCallback(() => setMenuOpen((open) => !open), []);
 
   return (
-    <div data-testid="file-toolbar" role="toolbar" aria-label="文件工具栏">
-      <button type="button" onClick={onCreateFolder}>
+    <div
+      className={styles.toolbar}
+      data-testid="file-toolbar"
+      role="toolbar"
+      aria-label="文件工具栏"
+    >
+      <button disabled={createFolderDisabled} type="button" onClick={onCreateFolder}>
         新建文件夹
       </button>
       <button type="button" onClick={onRefresh}>
@@ -64,8 +74,9 @@ export function FileToolbar({
         更多操作
       </button>
       {menuOpen ? (
-        <div role="menu" aria-label="资源操作">
+        <div className={styles.menu} role="menu" aria-label="资源操作">
           <button
+            className={styles.menuItem}
             role="menuitem"
             type="button"
             aria-disabled={!can(selectedResource, 'can_rename')}
@@ -78,6 +89,7 @@ export function FileToolbar({
             重命名
           </button>
           <button
+            className={styles.menuItem}
             role="menuitem"
             type="button"
             aria-disabled={!can(selectedResource, 'can_move')}
@@ -90,6 +102,7 @@ export function FileToolbar({
             移动到
           </button>
           <button
+            className={styles.menuItem}
             role="menuitem"
             type="button"
             aria-disabled={!can(selectedResource, 'can_trash')}
@@ -102,10 +115,15 @@ export function FileToolbar({
             移入回收站
           </button>
           <button
+            className={styles.menuItem}
             role="menuitem"
             type="button"
-            aria-disabled={!can(selectedResource, 'can_download')}
-            disabled={!can(selectedResource, 'can_download')}
+            aria-disabled={!can(selectedResource, 'can_download') || !onDownload}
+            disabled={!can(selectedResource, 'can_download') || !onDownload}
+            onClick={() => {
+              if (can(selectedResource, 'can_download')) onDownload?.();
+              setMenuOpen(false);
+            }}
           >
             下载
           </button>

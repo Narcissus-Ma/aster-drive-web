@@ -95,6 +95,46 @@ describe('目录 children 查询', () => {
     expect(navigate).toHaveBeenCalledWith('/drive/parent-folder', { replace: true });
   });
 
+  it('加载失败后不自动重试，避免失效目录持续请求', async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ detail: '资源不存在' }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retryDelay: 1 } },
+    });
+
+    const { result } = renderHook(
+      () => useFolderChildren({ parentId: 'missing-folder' }),
+      { wrapper: createWrapper(queryClient) },
+    );
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('已经处于 fallback 路径时不重复导航', async () => {
+    const queryClient = new QueryClient();
+    const navigate = vi.fn();
+
+    await recoverResourceAccessError({
+      error: new ApiClientError('资源不存在', { status: 404 }),
+      currentPath: '/drive',
+      fallbackPath: '/drive',
+      navigate,
+      parentId: 'missing-root',
+      queryClient,
+    });
+
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
   it('资源返回 403 时重新获取 detail 和 capabilities', async () => {
     const fetchMock = vi.fn(
       async () =>

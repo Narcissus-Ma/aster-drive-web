@@ -60,3 +60,19 @@ test('Docker 构建上下文忽略依赖、产物和敏感环境文件', async (
   assert.match(dockerignore, /^\.env\.\*$/m);
   assert.match(dockerignore, /^\.git\/?$/m);
 });
+
+test('GitHub Actions 仅保留手动触发，不响应代码推送', async () => {
+  for (const workflowPath of [
+    '.github/workflows/ci.yml',
+    '.github/workflows/deploy.yml',
+  ]) {
+    const workflow = await readRepositoryFile(workflowPath);
+    const triggerSection = workflow.split(/\n(?:permissions|env|concurrency):/, 1)[0];
+
+    assert.match(triggerSection, /^on:\s*\n\s+workflow_dispatch:/m);
+    assert.doesNotMatch(
+      triggerSection,
+      /^\s+(push|pull_request|schedule|workflow_run|repository_dispatch):/m,
+    );
+  }
+});

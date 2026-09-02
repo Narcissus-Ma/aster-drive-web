@@ -1,0 +1,65 @@
+.filter {
+  display: flex;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  -webkit-box-align: end;
+  -ms-flex-align: end;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #e1e7f0;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.filter label {
+  display: flex;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 132px;
+  color: #6c7893;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.filter input,
+.filter select {
+  min-width: 0;
+  min-height: 34px;
+  padding: 0 8px;
+  border: 1px solid #d7deeb;
+  border-radius: 7px;
+  color: #34405a;
+  background: #ffffff;
+  font-size: 13px;
+}
+
+.filter input:focus,
+.filter select:focus {
+  outline: 2px solid rgb(83 109 254 / 28%);
+  outline-offset: 1px;
+  border-color: #536dfe;
+}
+
+@media (max-width: 720px) {
+  .filter {
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    align-items: stretch;
+    -webkit-box-align: stretch;
+    -ms-flex-align: stretch;
+  }
+
+  .filter label {
+    min-width: 0;
+  }
+}

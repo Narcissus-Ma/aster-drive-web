@@ -1,12 +1,18 @@
 import { useCallback } from 'react';
 import { Link } from 'react-router-dom';
 
+import styles from './directory-tree.module.css';
+
 export interface DirectoryTreeProps {
   currentFolderId: string | undefined;
+  currentFolderName?: string;
 }
 
-export function DirectoryTree({ currentFolderId }: DirectoryTreeProps): JSX.Element {
-  const currentLabel = currentFolderId ? `目录 ${currentFolderId}` : '我的文件';
+export function DirectoryTree({
+  currentFolderId,
+  currentFolderName,
+}: DirectoryTreeProps): JSX.Element {
+  const currentLabel = currentFolderName ?? '当前目录';
   const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLElement>) => {
     if (event.key === 'Escape') {
       (event.currentTarget as HTMLElement).blur();
@@ -14,7 +20,12 @@ export function DirectoryTree({ currentFolderId }: DirectoryTreeProps): JSX.Elem
   }, []);
 
   return (
-    <nav data-testid="directory-tree" aria-label="目录树" onKeyDown={handleKeyDown}>
+    <nav
+      className={styles.tree}
+      data-testid="directory-tree"
+      aria-label="目录树"
+      onKeyDown={handleKeyDown}
+    >
       <p>目录</p>
       <ul>
         <li>

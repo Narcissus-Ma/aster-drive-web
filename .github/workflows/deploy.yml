@@ -1,10 +1,8 @@
 name: Web Deploy
 
+# 部署由外部环境负责，保留手动触发仅用于临时检查。
 on:
   workflow_dispatch:
-  push:
-    tags:
-      - 'web-v*'
 
 permissions:
   contents: read
